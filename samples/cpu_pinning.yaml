@@ -1,0 +1,39 @@
+---
+# Sample benchmark task config file
+# Perform a pinning of virtual machine instances to dedicated physical CPU
+# cores.
+
+schema: "yardstick:task:0.1"
+{% set run_step = run_step or 'setup,run,teardown' %}
+
+scenarios:
+-
+  type: CpuPinning
+  options:
+    cpu_set: 0,2,4,6
+    host_memory: 512
+    host: host1,host2,host3,host4,host5
+    image: cirros-0.3.3
+    flavor: yardstick-pinned-flavor
+    external_network: ext-net
+
+  nodes:
+    host1: node1.demo
+    host2: node2.demo
+    host3: node3.demo
+    host4: node4.demo
+    host5: node5.demo
+
+  runner:
+    type: Iteration
+    iterations: 1
+    run_step: {{run_step}}
+    pre-start-action:
+        command: "bash ./yardstick/benchmark/scenarios/compute/prepare_cpu_pinning.sh"
+    post-stop-action:
+        command: "bash ./yardstick/benchmark/scenarios/compute/reset_pinning.sh"
+
+context:
+  type: Node
+  name: demo
+  file: etc/yardstick/nodes/compass_sclab_physical/pod.yaml
