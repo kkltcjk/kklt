@@ -8,7 +8,6 @@
 # ############################################################################
 from __future__ import print_function
 from __future__ import absolute_import
-import pkg_resources
 import logging
 from datetime import datetime
 
@@ -27,45 +26,54 @@ class Resize(base.Scenario):
 
     __scenario_type__ = "Resize"
 
-    TARGET_SCRIPT = 'resize.bash'
-
     def __init__(self, scenario_cfg, context_cfg):
         self.scenario_cfg = scenario_cfg
         self.context_cfg = context_cfg
-        self.target_script = pkg_resources.resource_filename(
-            'yardstick.benchmark.scenarios.compute', Resize.TARGET_SCRIPT)
 
-        print('\n{}'.format(scenario_cfg))
-        print('{}\n'.format(context_cfg))
+        host = self.context_cfg['host']
+        self.user = host.get('user', 'ubuntu')
+        self.port = host.get("ssh_port", ssh.DEFAULT_PORT)
+        self.ip = host.get('ip')
+        self.key = host.get('key_filename', '/root/.ssh/id_rsa')
+        self.password = host.get('password')
 
     def _get_ssh_client(self):
-        host = self.context_cfg['host']
-        user = host.get('user', 'ubuntu')
-        ssh_port = host.get("ssh_port", ssh.DEFAULT_PORT)
-        ip = host.get('ip')
-        key = host.get('key_filename', '/root/.ssh/id_rsa')
-        password = host.get('password')
 
-        if password is not None:
+        if self.password is not None:
             LOG.info("Log in via pw, user:%s, host:%s, pw:%s",
-                     user, ip, password)
-            self.client = ssh.SSH(user, ip, password=password, port=ssh_port)
+                     self.user, self.ip, self.password)
+            self.client = ssh.SSH(self.user, self.ip, password=self.password,
+                                  port=self.port)
         else:
             LOG.info("Log in via key, user:%s, host:%s, key_filename:%s",
-                     user, ip, key)
-            self.client = ssh.SSH(user, ip, key_filename=key, port=ssh_port)
+                     self.user, self.ip, self.key)
+            self.client = ssh.SSH(self.user, self.ip, key_filename=self.key,
+                                  port=self.port)
 
         self.client.wait(timeout=600)
 
     def run(self, result):
-        self._get_ssh_client()
-        self.client._put_file_shell(self.target_script, '~/resize.bash')
-        cmd = '/bin/sh resize.bash'
-        status, stdout, stderr = self.client.execute(cmd)
+
+        self._write_remote_file()
 
         server_name = self.scenario_cfg['host']
-        new_flavor_name = self.scenario_cfg['new_flavor']
+        new_flavor_name = self.scenario_cfg['vm1_new_flavor']
+        duration = self._do_resize(server_name, new_flavor_name)
+        print('The duration is {}'.format(duration))
 
+        self._check_file_content()
+
+        vm2_server_name = '{}-2'.format(server_name)
+        vm2_image_name = self.scenario_cfg['vm2_image']
+        vm2_origin_flavor_name = self.scenario_cfg['vm2_origin_flavor']
+        vm2_new_flavor_name = self.scenario_cfg['vm2_new_flavor']
+        self._create_server(vm2_server_name, vm2_image_name,
+                            vm2_origin_flavor_name)
+        openstack_utils.check_status('ACTIVE', vm2_server_name, 20, 5)
+        duration = self._do_resize(vm2_server_name, vm2_new_flavor_name)
+        print('The duration is {}'.format(duration))
+
+    def _do_resize(self, server_name, new_flavor_name):
         nova_client = openstack_utils.get_nova_client()
 
         server_id = openstack_utils.get_server_by_name(server_name).id
@@ -77,18 +85,29 @@ class Resize(base.Scenario):
         nova_client.servers.confirm_resize(server_id)
         t2 = datetime.now()
         duration = (t2 - t1).seconds
-        print('The duration is {}'.format(duration))
 
+        return duration
+
+    def _write_remote_file(self):
+        self._get_ssh_client()
+        cmd = "echo 'Hello World!' > resize.data"
+        self.client.execute(cmd)
+
+    def _check_file_content(self):
         self._get_ssh_client()
         cmd = 'cat resize.data'
         status, stdout, stderr = self.client.execute(cmd)
-        print(stdout)
+        print(stdout.strip())
 
     def _create_server(self, server_name, image_name, flavor_name):
         nova_client = openstack_utils.get_nova_client()
 
-        image = openstack_utils.get_image(image_name)
+        image = openstack_utils.get_image_by_name(image_name)
 
-        flavor = openstack_utils.get_flavor(flavor_name)
+        flavor = openstack_utils.get_flavor_by_name(flavor_name)
 
-        return nova_client.servers.create(server_name, image, flavor)
+        network = openstack_utils.get_network_by_name('ext-net')
+
+        nic = [{'net-id': network.id}]
+
+        return nova_client.servers.create(server_name, image, flavor, nics=nic)

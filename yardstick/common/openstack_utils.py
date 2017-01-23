@@ -335,7 +335,7 @@ def delete_aggregate(nova_client, aggregate_name):
 
 
 def get_server_by_name(name):
-    return get_nova_client().servers.list(search_opts={'name': name})[0]
+        return get_nova_client().servers.find(name=name)
 
 
 def get_image_by_name(name):
@@ -346,6 +346,11 @@ def get_image_by_name(name):
 def get_flavor_by_name(name):
     flavors = get_nova_client().flavors.list()
     return filter(lambda a: True if a.name == name else False, flavors)[0]
+
+
+def get_network_by_name(name):
+    networks = get_nova_client().networks.list()
+    return filter(lambda a: True if a.label == name else False, networks)[0]
 
 
 def check_status(status, name, iterations, interval):

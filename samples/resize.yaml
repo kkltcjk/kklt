@@ -1,23 +1,32 @@
 ---
 
 schema: "yardstick:task:0.1"
-{% set host = host or "node1.LF" %}
-{% set pod_info = pod_info or "etc/yardstick/nodes/compass_sclab_physical/pod.yaml" %}
 {% set image = image or "cirros-0.3.3" %}
 scenarios:
 -
   type: Resize
-  host: {{ host }}
+  host: node1.resize
 
   runner:
     type: Iteration
     iteration: 1
 
-  image: {{ image }}
-  origin_flavor: yardstick-flavor
-  new_flavor: m1.small
+  vm2_origin_flavor: yardstick-flavor
+  vm2_new_flavor: m1.small
+  vm2_image: {{ image }}
+
+  vm1_new_flavor: m1.small
 
 context:
-  type: Node
-  name: LF
-  file: {{pod_info}}
+  name: resize
+  image: {{image}}
+  flavor: yardstick-flavor
+  user: cirros
+
+  servers:
+    node1:
+      floating_ip: true
+
+  networks:
+    test:
+      cidr: '10.0.1.0/24'
