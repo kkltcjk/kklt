@@ -1,0 +1,23 @@
+---
+
+schema: "yardstick:task:0.1"
+{% set host = host or "node1.LF" %}
+{% set pod_info = pod_info or "etc/yardstick/nodes/compass_sclab_physical/pod.yaml" %}
+{% set image = image or "cirros-0.3.3" %}
+scenarios:
+-
+  type: Resize
+  host: {{ host }}
+
+  runner:
+    type: Iteration
+    iteration: 1
+
+  image: {{ image }}
+  origin_flavor: yardstick-flavor
+  new_flavor: m1.small
+
+context:
+  type: Node
+  name: LF
+  file: {{pod_info}}

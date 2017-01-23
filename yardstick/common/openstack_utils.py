@@ -332,3 +332,32 @@ def delete_aggregate(nova_client, aggregate_name):
         log.error("Error [delete_aggregate(nova_client, %s)]: %s"
                   % (aggregate_name, e))
         return False
+
+
+def get_server_by_name(name):
+    return get_nova_client().servers.list(search_opts={'name': name})[0]
+
+
+def get_image_by_name(name):
+    images = get_nova_client().images.list()
+    return filter(lambda a: True if a.name == name else False, images)[0]
+
+
+def get_flavor_by_name(name):
+    flavors = get_nova_client().flavors.list()
+    return filter(lambda a: True if a.name == name else False, flavors)[0]
+
+
+def check_status(status, name, iterations, interval):
+    for i in xrange(iterations):
+        try:
+            server = get_server_by_name(name)
+        except IndexError:
+            log.error('Cannot found %s server', name)
+            raise
+
+        if server.status == status:
+            return True
+
+        time.sleep(interval)
+    return False
