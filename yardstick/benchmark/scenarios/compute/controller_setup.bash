@@ -12,4 +12,10 @@ set -e
 
 sed -i '/[DEFAULT]/a scheduler_default_filters=NUMATopologyFilter,AggregateInstanceExtraSpecsFilter' /etc/nova/nova.conf
 
-systemctl restart nova-scheduler.service
+if [ $(systemctl is-active nova-scheduler.service) == "active" ]; then
+    echo "restarting nova-scheduler.service"
+    systemctl restart nova-scheduler.service
+elif [ $(systemctl is-active openstack-nova-scheduler.service) == "active" ]; then
+    echo "restarting openstack-nova-scheduler.service"
+    systemctl restart openstack-nova-scheduler.service
+fi

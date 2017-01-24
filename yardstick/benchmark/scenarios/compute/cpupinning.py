@@ -46,7 +46,9 @@ class CpuPinning(base.Scenario):
         self.external_network = self.options.get("external_network", "ext-net")
         self.cpu_set = self.options.get("cpu_set", '1,2,3,4,5,6')
         self.host_memory = self.options.get("host_memory", 512)
-        self.nova_client = None
+        self.nova_client = op_utils.get_nova_client()
+        self.neutron_client = op_utils.get_neutron_client()
+        self.glance_client = op_utils.get_glance_client()
         self.instance = None
         self.client = None
 
@@ -128,13 +130,13 @@ class CpuPinning(base.Scenario):
     def run(self, result):
         """execute the benchmark"""
 
-        self.nova_client = op_utils.get_nova_client()
-        self.instance = self.nova_client.servers.create(
-            name="cpu-pinned-instance", flavor=self.flavor, image=self.image,
-            nics=self.external_network)
+        network_id = op_utils.get_network_id(self.neutron_client,
+                                             self.external_network)
+        image_id = op_utils.get_image_id(self.glance_client, self.image)
 
-        # Check VM status
-        op_utils.check_status("ACTIVE", "NUMA-pinned-instance-1", 10, 5)
+        self.instance = op_utils.create_instance_and_wait_for_active(
+            self.flavor, image_id, network_id,
+            instance_name="cpu-pinned-instance")
 
         cmd = "virsh dumpxml %s" % self.instance.id
         LOG.debug("Executing command: %s", cmd)
@@ -142,9 +144,14 @@ class CpuPinning(base.Scenario):
         if status:
             raise RuntimeError(stderr)
 
+        pinning = []
         root = ET.fromstring(stdout)
         for vcpupin in root.iter('vcpupin'):
-            result.update(vcpupin.attrib)
+            pinning.append(vcpupin.attrib)
+
+        result.update({"pinning": pinning})
+
+        op_utils.delete_instance(self.nova_client, self.instance.id)
 
     def teardown(self):
         """teardown the benchmark"""
@@ -156,8 +163,6 @@ class CpuPinning(base.Scenario):
         self.compute_reset_script = pkg_resources.resource_filename(
             "yardstick.benchmark.scenarios.compute",
             CpuPinning.COMPUTE_RESET_SCRIPT)
-
-        op_utils.delete_instance(self.nova_client, self.instance.id)
 
         # log in a compute node to reset
         for compute_node in self.compute_node_name:

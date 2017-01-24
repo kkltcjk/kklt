@@ -16,11 +16,13 @@ import logging
 from keystoneauth1 import loading
 from keystoneauth1 import session
 from novaclient import client as novaclient
+from glanceclient import client as glanceclient
+from neutronclient.neutron import client as neutronclient
 
 log = logging.getLogger(__name__)
 
 DEFAULT_HEAT_API_VERSION = '1'
-DEFAULT_NOVA_API_VERSION = '2'
+DEFAULT_API_VERSION = '2'
 
 
 # *********************************************
@@ -112,12 +114,39 @@ def get_nova_client_version():
     if api_version is not None:
         log.info("OS_COMPUTE_API_VERSION is set in env as '%s'", api_version)
         return api_version
-    return DEFAULT_NOVA_API_VERSION
+    return DEFAULT_API_VERSION
 
 
 def get_nova_client():
     sess = get_session()
     return novaclient.Client(get_nova_client_version(), session=sess)
+
+
+def get_neutron_client_version():
+    api_version = os.getenv('OS_NETWORK_API_VERSION')
+    if api_version is not None:
+        log.info("OS_NETWORK_API_VERSION is set in env as '%s'",
+                 api_version)
+        return api_version
+    return DEFAULT_API_VERSION
+
+
+def get_neutron_client():
+    sess = get_session()
+    return neutronclient.Client(get_neutron_client_version(), session=sess)
+
+
+def get_glance_client_version():
+    api_version = os.getenv('OS_IMAGE_API_VERSION')
+    if api_version is not None:
+        log.info("OS_IMAGE_API_VERSION is set in env as '%s'", api_version)
+        return api_version
+    return DEFAULT_API_VERSION
+
+
+def get_glance_client():
+    sess = get_session()
+    return glanceclient.Client(get_glance_client_version(), session=sess)
 
 
 # *********************************************
@@ -335,7 +364,7 @@ def delete_aggregate(nova_client, aggregate_name):
 
 
 def get_server_by_name(name):
-        return get_nova_client().servers.find(name=name)
+    return get_nova_client().servers.list(search_opts={'name': name})[0]
 
 
 def get_image_by_name(name):
@@ -346,11 +375,6 @@ def get_image_by_name(name):
 def get_flavor_by_name(name):
     flavors = get_nova_client().flavors.list()
     return filter(lambda a: True if a.name == name else False, flavors)[0]
-
-
-def get_network_by_name(name):
-    networks = get_nova_client().networks.list()
-    return filter(lambda a: True if a.label == name else False, networks)[0]
 
 
 def check_status(status, name, iterations, interval):
@@ -366,3 +390,29 @@ def check_status(status, name, iterations, interval):
 
         time.sleep(interval)
     return False
+
+
+# *********************************************
+#   NEUTRON
+# *********************************************
+def get_network_id(neutron_client, network_name):
+    networks = neutron_client.list_networks()['networks']
+    id = ''
+    for n in networks:
+        if n['name'] == network_name:
+            id = n['id']
+            break
+    return id
+
+
+# *********************************************
+#   GLANCE
+# *********************************************
+def get_image_id(glance_client, image_name):
+    images = glance_client.images.list()
+    id = ''
+    for i in images:
+        if i.name == image_name:
+            id = i.id
+            break
+    return id
