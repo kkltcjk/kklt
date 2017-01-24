@@ -2,17 +2,30 @@
 
 schema: "yardstick:task:0.1"
 {% set image = image or "cirros-0.3.3" %}
+{% set run_step = run_step or 'setup,run,teardown' %}
 scenarios:
 -
   type: Resize
+
+  options:
+    cpu_set: 0,2,4,6
+    host_memory: 512
+    host: node1,node2,node3,node4
+
   host: node1.resize
 
   runner:
     type: Iteration
     iteration: 1
+    run_step: {{run_step}}
+    pre-start-action:
+        command: "bash ./yardstick/benchmark/scenarios/compute/before_resize.sh"
+    post-stop-action:
+        command: "bash ./yardstick/benchmark/scenarios/compute/after_resize.sh"
 
-  vm2_origin_flavor: yardstick-flavor
-  vm2_new_flavor: m1.small
+  node_file: etc/yardstick/nodes/compass_sclab_virtual/pod.yaml
+  vm2_origin_flavor: yardstick-pinned-flavor-1
+  vm2_new_flavor: yardstick-pinned-flavor-2
   vm2_image: {{ image }}
 
   vm1_new_flavor: m1.small
