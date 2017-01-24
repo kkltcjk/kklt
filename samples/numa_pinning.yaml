@@ -1,16 +1,15 @@
 ---
 # Sample benchmark task config file
-# Perform a pinning of virtual machine instances to dedicated physical CPU
-# cores.
+# Perform a pinning of virtual machine instances to dedicated NUMA node.
 
 schema: "yardstick:task:0.1"
 {% set run_step = run_step or 'setup,run,teardown' %}
 
 scenarios:
 -
-  type: CpuPinning
+  type: NumaPinning
   options:
-    cpu_set: 8,10,12,14
+    cpu_set: 2,4,6,8
     host_memory: 512
     host: host1,host2,host3,host4
     image: cirros-0.3.3
@@ -29,7 +28,7 @@ scenarios:
     iterations: 1
     run_step: {{run_step}}
     pre-start-action:
-        command: "bash ./yardstick/benchmark/scenarios/compute/prepare_cpu_pinning.sh > /dev/null"
+        command: "bash ./yardstick/benchmark/scenarios/compute/prepare_numa_pinning.sh > /dev/null"
     post-stop-action:
         command: "bash ./yardstick/benchmark/scenarios/compute/reset_pinning.sh > /dev/null"
 

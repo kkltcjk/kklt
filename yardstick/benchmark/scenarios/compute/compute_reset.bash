@@ -10,7 +10,13 @@
 
 set -e
 
-sed -i '/vcpu_pin_set/d' /etc/nova/nova.conf
-sed -i '/reserved_host_memory_mb/d' /etc/nova/nova.conf
+sudo sed -i '/vcpu_pin_set/d' /etc/nova/nova.conf
+sudo sed -i '/reserved_host_memory_mb/d' /etc/nova/nova.conf
 
-systemctl restart nova-compute.service
+if [ $(systemctl is-active nova-compute.service) == "active" ]; then
+    echo "restarting nova-compute.service"
+    systemctl restart nova-compute.service
+elif [ $(systemctl is-active openstack-nova-compute.service) == "active" ]; then
+    echo "restarting openstack-nova-compute.service"
+    systemctl restart openstack-nova-compute.service
+fi

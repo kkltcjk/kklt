@@ -13,7 +13,13 @@ set -e
 CPU_SET=$1
 HOST_MEMORY=$2
 
-sed -i '/[DEFAULT]/a reserved_host_memory_mb='''${HOST_MEMORY}'''' /etc/nova/nova.conf
-sed -i '/[DEFAULT]/a vcpu_pin_set='''${CPU_SET}'''' /etc/nova/nova.conf
+sed -i '/DEFAULT/a reserved_host_memory_mb='''${HOST_MEMORY}'''' /etc/nova/nova.conf
+sed -i '/DEFAULT/a vcpu_pin_set='''${CPU_SET}'''' /etc/nova/nova.conf
 
-systemctl restart nova-compute.service
+if [ $(systemctl is-active nova-compute.service) == "active" ]; then
+    echo "restarting nova-compute.service"
+    systemctl restart nova-compute.service
+elif [ $(systemctl is-active openstack-nova-compute.service) == "active" ]; then
+    echo "restarting openstack-nova-compute.service"
+    systemctl restart openstack-nova-compute.service
+fi
