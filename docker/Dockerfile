@@ -11,7 +11,7 @@ FROM ubuntu:14.04
 
 LABEL image=opnfv/yardstick
 
-ARG BRANCH=master
+ARG BRANCH=cmcc
 
 # GIT repo directory
 ENV REPOS_DIR /home/opnfv/repos
@@ -58,7 +58,7 @@ RUN apt-get -y autoremove && \
 RUN mkdir -p ${REPOS_DIR}
 
 RUN git config --global http.sslVerify false
-RUN git clone --depth 1 -b $BRANCH https://gerrit.opnfv.org/gerrit/yardstick ${YARDSTICK_REPO_DIR}
+RUN git clone --depth 1 -b $BRANCH http://192.168.34.240/Jing/Yardstick-CMCC.git ${YARDSTICK_REPO_DIR}
 RUN git clone --depth 1 https://gerrit.opnfv.org/gerrit/releng ${RELENG_REPO_DIR}
 
 # install yardstick + dependencies
