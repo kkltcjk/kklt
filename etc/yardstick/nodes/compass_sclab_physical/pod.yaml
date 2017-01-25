@@ -13,30 +13,30 @@ nodes:
 -
     name: node1
     role: Controller
-    ip: 192.168.23.15
+    ip: 192.168.10.10
     user: root
     password: root
 -
     name: node2
     role: Controller
-    ip: 192.168.23.16
+    ip: 192.168.10.11
     user: root
     password: root
 -
     name: node3
     role: Controller
-    ip: 192.168.23.17
+    ip: 192.168.10.12
     user: root
     password: root
 -
     name: node4
     role: Compute
-    ip: 192.168.23.18
+    ip: 192.168.10.13
     user: root
     password: root
 -
     name: node5
     role: Compute
-    ip: 192.168.23.19
+    ip: 192.168.10.14
     user: root
     password: root
