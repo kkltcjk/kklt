@@ -23,7 +23,7 @@ scenarios:
     post-stop-action:
         command: "bash ./yardstick/benchmark/scenarios/compute/after_resize.sh"
 
-  node_file: etc/yardstick/nodes/compass_sclab_physical/pod.yaml
+  node_file: etc/yardstick/nodes/compass_sclab_virtual/pod.yaml
   vm2_origin_flavor: yardstick-pinned-flavor-1
   vm2_new_flavor: yardstick-pinned-flavor-2
   vm2_image: {{ image }}
