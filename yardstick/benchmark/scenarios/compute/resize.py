@@ -228,14 +228,15 @@ class Resize(base.Scenario):
 
     def _create_server(self, server_name, image_name, flavor_name):
         nova_client = openstack_utils.get_nova_client()
+        neutron_client = openstack_utils.get_neutron_client()
 
         image = openstack_utils.get_image_by_name(image_name)
 
         flavor = openstack_utils.get_flavor_by_name(flavor_name)
 
-        network = openstack_utils.get_network_by_name('ext-net')
+        network_id = openstack_utils.get_network_id(neutron_client, 'ext-net')
 
-        nic = [{'net-id': network.id}]
+        nic = [{'net-id': network_id}]
 
         return nova_client.servers.create(server_name, image, flavor, nics=nic)
 
