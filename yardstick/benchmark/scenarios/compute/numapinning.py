@@ -7,6 +7,7 @@
 # http://www.apache.org/licenses/LICENSE-2.0
 ##############################################################################
 
+from __future__ import print_function
 from __future__ import absolute_import
 
 import logging
@@ -150,7 +151,7 @@ class NumaPinning(base.Scenario):
         result.update({"pinning": pinning})
 
         # Create multiple VMs to test CPU ran out
-        self.instance_2 = op_utils.create_instance_and_wait_for_active(
+        self.instance_2 = op_utils.create_instance(
             self.flavor, image_id, network_id,
             instance_name="NUMA-pinned-instance-2")
 
