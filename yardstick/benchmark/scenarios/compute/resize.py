@@ -115,7 +115,7 @@ class Resize(base.Scenario):
 
         self.client.wait(timeout=600)
 
-    def setup(self):
+    def mysetup(self):
         """scenario setup"""
         self.controller_setup_script = pkg_resources.resource_filename(
             "yardstick.benchmark.scenarios.compute",
@@ -166,6 +166,7 @@ class Resize(base.Scenario):
 
         self._check_file_content()
 
+        self.mysetup()
         vm2_server_name = '{}-2'.format(server_name)
         vm2_image_name = self.scenario_cfg['vm2_image']
         vm2_origin_flavor_name = self.scenario_cfg['vm2_origin_flavor']
@@ -184,6 +185,7 @@ class Resize(base.Scenario):
         print(data)
 
         print('The duration is {}'.format(duration))
+        self.myteardown()
 
     def _check_numa_node(self, server_id):
         for compute_node in self.compute_node_name:
@@ -240,7 +242,7 @@ class Resize(base.Scenario):
 
         return nova_client.servers.create(server_name, image, flavor, nics=nic)
 
-    def teardown(self):
+    def myteardown(self):
         """teardown the benchmark"""
 
         self.controller_reset_script = pkg_resources.resource_filename(
