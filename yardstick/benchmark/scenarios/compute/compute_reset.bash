@@ -13,10 +13,20 @@ set -e
 sudo sed -i '/vcpu_pin_set/d' /etc/nova/nova.conf
 sudo sed -i '/reserved_host_memory_mb/d' /etc/nova/nova.conf
 
-if [[ $(service nova-compute status | grep running) ]]; then
+if which systemctl 2>/dev/null; then
+  if [ $(systemctl is-active nova-compute.service) == "active" ]; then
+      echo "restarting nova-compute.service"
+      systemctl restart nova-compute.service
+  elif [ $(systemctl is-active openstack-nova-compute.service) == "active" ]; then
+      echo "restarting openstack-nova-compute.service"
+      systemctl restart openstack-nova-compute.service
+  fi
+else
+  if [[ $(service nova-compute status | grep running) ]]; then
     echo "restarting nova-compute.service"
     service nova-compute restart
-elif [[ $(service openstack-nova-compute status | grep running) ]]; then
+  elif [[ $(service openstack-nova-compute status | grep running) ]]; then
     echo "restarting openstack-nova-compute.service"
     service openstack-nova-compute restart
+  fi
 fi
