@@ -1,5 +1,5 @@
 ##############################################################################
-# Copyright (c) 2015 Ericsson AB and others.
+# Copyright (c) 2017 Huawei Technologies Co.,Ltd and others.
 #
 # All rights reserved. This program and the accompanying materials
 # are made available under the terms of the Apache License, Version 2.0
@@ -39,7 +39,8 @@ class AttachNic(base.Scenario):
         self.scenario_cfg = scenario_cfg
         self.context_cfg = context_cfg
         self.target_script = pkg_resources.resource_filename(
-            'yardstick.benchmark.scenarios.networking', AttachNic.TARGET_SCRIPT)
+            'yardstick.benchmark.scenarios.networking',
+            AttachNic.TARGET_SCRIPT)
         host = self.context_cfg['host']
         user = host.get('user', 'ubuntu')
         ssh_port = host.get("ssh_port", ssh.DEFAULT_PORT)
