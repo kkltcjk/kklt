@@ -7,7 +7,6 @@
 # http://www.apache.org/licenses/LICENSE-2.0
 ##############################################################################
 
-from __future__ import print_function
 from __future__ import absolute_import
 
 import logging
@@ -133,6 +132,7 @@ class NumaPinning(base.Scenario):
                                              self.external_network)
         image_id = op_utils.get_image_id(self.glance_client, self.image)
 
+        LOG.debug("Creating NUMA-pinned-instance-1...")
         self.instance = op_utils.create_instance_and_wait_for_active(
             self.flavor, image_id, network_id,
             instance_name="NUMA-pinned-instance-1")
@@ -151,6 +151,7 @@ class NumaPinning(base.Scenario):
         result.update({"pinning": pinning})
 
         # Create multiple VMs to test CPU ran out
+        LOG.debug("Creating NUMA-pinned-instance-2...")
         self.instance_2 = op_utils.create_instance(
             self.flavor, image_id, network_id,
             instance_name="NUMA-pinned-instance-2")
@@ -159,7 +160,7 @@ class NumaPinning(base.Scenario):
                                        10, 5)
 
         if status:
-            print("Create VM failed!")
+            print("Create NUMA-pinned-instance-2 failed")
 
         op_utils.delete_instance(self.nova_client, self.instance.id)
         op_utils.delete_instance(self.nova_client, self.instance_2.id)
