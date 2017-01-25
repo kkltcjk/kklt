@@ -39,7 +39,8 @@ class AttachNic(base.Scenario):
         self.scenario_cfg = scenario_cfg
         self.context_cfg = context_cfg
         self.target_script = pkg_resources.resource_filename(
-            'yardstick.benchmark.scenarios.networking', AttachNic.TARGET_SCRIPT)
+            'yardstick.benchmark.scenarios.networking',
+            AttachNic.TARGET_SCRIPT)
         host = self.context_cfg['host']
         user = host.get('user', 'ubuntu')
         ssh_port = host.get("ssh_port", ssh.DEFAULT_PORT)
