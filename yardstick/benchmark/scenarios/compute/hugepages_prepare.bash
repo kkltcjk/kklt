@@ -27,11 +27,11 @@ for FLAVOR in `nova flavor-list | grep "True" | cut -f 2 -d ' '`; \
     done
 
 
-openstack flavor create --id 601 --ram 512 --disk 3 --vcpus 2 yardstick-hugepages-flavor1
-openstack flavor create --id 601 --ram 512 --disk 3 --vcpus 2 yardstick-hugepages-flavor2
+openstack flavor create --id 601 --ram 1024 --disk 3 --vcpus 2 yardstick-hugepages-flavor1
+openstack flavor create --id 602 --ram 1024 --disk 3 --vcpus 2 yardstick-hugepages-flavor2
 
 openstack flavor set yardstick-hugepages-flavor1 --property hw:mem_page_size=2048
-openstack flavor set yardstick-hugepages-flavor2 --property hw:mem_page_size=1024Mb
+openstack flavor set yardstick-hugepages-flavor2 --property hw:mem_page_size=1048576
 
 openstack flavor set --property hw:cpu_policy=dedicated yardstick-hugepages-flavor1
 openstack flavor set --property hw:cpu_policy=dedicated yardstick-hugepages-flavor2

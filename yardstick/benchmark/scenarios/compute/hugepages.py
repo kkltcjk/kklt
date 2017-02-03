@@ -42,6 +42,8 @@ class Hugepages(base.Scenario):
         self.host_list.sort()
         self.flavor1 = self.options.get("flavor1",
                                         "yardstick-hugepages-flavor1")
+        self.flavor2 = self.options.get("flavor2",
+                                        "yardstick-hugepages-flavor2")
         self.image = self.options.get("image", 'cirros-0.3.3')
         self.external_network = self.options.get("external_network",
                                                  "external")
@@ -139,6 +141,7 @@ class Hugepages(base.Scenario):
     def run(self, result):
         """execute the benchmark"""
 
+        # flavor1
         network_id = op_utils.get_network_id(self.neutron_client,
                                              self.external_network)
         image_id = op_utils.get_image_id(self.glance_client, self.image)
@@ -146,17 +149,34 @@ class Hugepages(base.Scenario):
                         self.compute_node_name[0])
         self.instance = op_utils.create_instance_and_wait_for_active(
                         self.flavor1, image_id, network_id,
-                        instance_name="hugepages-2m-VM")
+                        instance_name="hugepages-2M-VM")
 
         free_mem_after = self._check_compute_node_free_hugepage(
                     self.compute_node_name[0])
 
         LOG.debug("free_mem_before: %s, after: %s",
                   free_mem_before, free_mem_after)
+        op_utils.delete_instance(self.nova_client, self.instance.id)
+        # flavor2
+        network_id = op_utils.get_network_id(self.neutron_client,
+                                             self.external_network)
+        image_id = op_utils.get_image_id(self.glance_client, self.image)
+        free_mem_before = self._check_compute_node_free_hugepage(
+                        self.compute_node_name[1])
+        self.instance = op_utils.create_instance_and_wait_for_active(
+                        self.flavor2, image_id, network_id,
+                        instance_name="hugepages-1G-VM")
+
+        free_mem_after = self._check_compute_node_free_hugepage(
+                    self.compute_node_name[1])
+
+        LOG.debug("free_mem_before: %s, after: %s",
+                  free_mem_before, free_mem_after)
+        op_utils.delete_instance(self.nova_client, self.instance.id)
+
         result.update({"free_mem_before": free_mem_before})
         result.update({"free_mem_after": free_mem_after})
 
-        op_utils.delete_instance(self.nova_client, self.instance.id)
 
     def _check_compute_node_free_hugepage(self, compute_node_name):
         self._ssh_host(compute_node_name)
