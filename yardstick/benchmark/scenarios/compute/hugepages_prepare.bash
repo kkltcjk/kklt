@@ -21,12 +21,6 @@ nova aggregate-add-host compute_node_1 overcloud-novacompute-0.opnfvlf.org
 
 nova aggregate-add-host compute_node_2 overcloud-novacompute-1.opnfvlf.org
 
-for FLAVOR in `nova flavor-list | grep "True" | cut -f 2 -d ' '`; \
-    do openstack flavor set --property \
-        aggregate_instance_extra_specs:pinned=false ${FLAVOR}; \
-    done
-
-
 openstack flavor create --id 601 --ram 1024 --disk 3 --vcpus 2 yardstick-hugepages-flavor1
 openstack flavor create --id 602 --ram 1024 --disk 3 --vcpus 2 yardstick-hugepages-flavor2
 

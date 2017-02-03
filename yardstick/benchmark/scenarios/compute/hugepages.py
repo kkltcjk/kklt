@@ -112,10 +112,10 @@ class Hugepages(base.Scenario):
             self.client._put_file_shell(
                 self.controller_setup_script, '~/controller_setup.sh')
             # setup controller node
-            #TBD status, stdout, stderr = self.client.execute(
-            #TBD     "sudo bash controller_setup.sh")
-            #TBD if status:
-            #TBD     raise RuntimeError(stderr)
+            status, stdout, stderr = self.client.execute(
+                "sudo bash controller_setup.sh")
+            if status:
+                raise RuntimeError(stderr)
 
         # log in a compute node to setup
         self.hugepages_free_script = pkg_resources.resource_filename(
@@ -132,11 +132,11 @@ class Hugepages(base.Scenario):
             self.client._put_file_shell(
                 self.hugepages_free_script, '~/hugepages_free.sh')
             # setup compute node
-            #TBD status, stdout, stderr = self.client.execute(
-            #TBD     "sudo bash compute_setup.sh %s %d" % (self.cpu_set,
-            #TBD                                           self.host_memory))
-            #TBD if status:
-            #TBD     raise RuntimeError(stderr)
+            status, stdout, stderr = self.client.execute(
+                "sudo bash compute_setup.sh %s %d" % (self.cpu_set,
+                                                      self.host_memory))
+            if status:
+                raise RuntimeError(stderr)
 
     def run(self, result):
         """execute the benchmark"""
@@ -176,7 +176,6 @@ class Hugepages(base.Scenario):
 
         result.update({"free_mem_before": free_mem_before})
         result.update({"free_mem_after": free_mem_after})
-
 
     def _check_compute_node_free_hugepage(self, compute_node_name):
         self._ssh_host(compute_node_name)
