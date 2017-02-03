@@ -110,10 +110,10 @@ class Hugepages(base.Scenario):
             self.client._put_file_shell(
                 self.controller_setup_script, '~/controller_setup.sh')
             # setup controller node
-            status, stdout, stderr = self.client.execute(
-                "sudo bash controller_setup.sh")
-            if status:
-                raise RuntimeError(stderr)
+            #TBD status, stdout, stderr = self.client.execute(
+            #TBD     "sudo bash controller_setup.sh")
+            #TBD if status:
+            #TBD     raise RuntimeError(stderr)
 
         # log in a compute node to setup
         self.hugepages_free_script = pkg_resources.resource_filename(
@@ -130,11 +130,11 @@ class Hugepages(base.Scenario):
             self.client._put_file_shell(
                 self.hugepages_free_script, '~/hugepages_free.sh')
             # setup compute node
-            status, stdout, stderr = self.client.execute(
-                "sudo bash compute_setup.sh %s %d" % (self.cpu_set,
-                                                      self.host_memory))
-            if status:
-                raise RuntimeError(stderr)
+            #TBD status, stdout, stderr = self.client.execute(
+            #TBD     "sudo bash compute_setup.sh %s %d" % (self.cpu_set,
+            #TBD                                           self.host_memory))
+            #TBD if status:
+            #TBD     raise RuntimeError(stderr)
 
     def run(self, result):
         """execute the benchmark"""
@@ -151,13 +151,15 @@ class Hugepages(base.Scenario):
         free_mem_after = self._check_compute_node_free_hugepage(
                     self.compute_node_name[0])
 
+        LOG.debug("free_mem_before: %s, after: %s",
+                  free_mem_before, free_mem_after)
         result.update({"free_mem_before": free_mem_before})
         result.update({"free_mem_after": free_mem_after})
 
         op_utils.delete_instance(self.nova_client, self.instance.id)
 
     def _check_compute_node_free_hugepage(self, compute_node_name):
-        self._ssh_host(self.compute_node_name)
+        self._ssh_host(compute_node_name)
         status, stdout, stderr = self.client.execute(
             "sudo bash hugepages_free.sh")
         if status:
