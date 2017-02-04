@@ -1,0 +1,23 @@
+---
+# Sample benchmark task config file
+# measure network latency using ping
+
+schema: "yardstick:task:0.1"
+
+scenarios:
+-
+  type: Heataction
+  runner:
+    type: Iteration
+    iterations: 1
+    interval: 1
+
+contexts:
+-
+  name: demo-template
+  user: cirros
+  heat_template: samples/demo-heat.yaml
+-
+  name: demo-template2
+  user: cirros
+  heat_template: samples/demo-heat2.yaml
