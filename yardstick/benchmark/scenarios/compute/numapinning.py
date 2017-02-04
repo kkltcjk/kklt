@@ -163,6 +163,11 @@ class NumaPinning(base.Scenario):
         if status:
             print("Create NUMA-pinned-instance-2 failed")
 
+        if len(pinning) == 1 and status:
+            result.update({"Test": "Passed"})
+        else:
+            result.update({"Test": "Failed"})
+
         op_utils.delete_instance(self.nova_client, self.instance.id)
         op_utils.delete_instance(self.nova_client, self.instance_2.id)
 
