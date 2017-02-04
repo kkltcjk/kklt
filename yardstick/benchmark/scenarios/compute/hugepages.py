@@ -157,6 +157,8 @@ class Hugepages(base.Scenario):
         LOG.debug("free_mem_before: %s, after: %s",
                   free_mem_before, free_mem_after)
         op_utils.delete_instance(self.nova_client, self.instance.id)
+        result.update({"hugepagesz-2M":
+                      self._pof(free_mem_before == free_mem_after+512)})
         # flavor2
         network_id = op_utils.get_network_id(self.neutron_client,
                                              self.external_network)
@@ -173,9 +175,13 @@ class Hugepages(base.Scenario):
         LOG.debug("free_mem_before: %s, after: %s",
                   free_mem_before, free_mem_after)
         op_utils.delete_instance(self.nova_client, self.instance.id)
+        result.update({"hugepagesz-1G":
+                      self._pof(free_mem_before == free_mem_after+1)})
 
-        result.update({"free_mem_before": free_mem_before})
-        result.update({"free_mem_after": free_mem_after})
+    def _pof(self, condition):
+        """Pass or FAIL helper"""
+
+        return "PASS" if condition else "FAIL"
 
     def _check_compute_node_free_hugepage(self, compute_node_name):
         self._ssh_host(compute_node_name)
