@@ -1,4 +1,4 @@
-heat_template_version: 2014-10-16 
+heat_template_version: 2015-04-30
 
 description: affinity test
 
@@ -14,6 +14,12 @@ description: affinity test
 #    default: mykey 
 
 resources: 
+    y-key-pair:
+        type: OS::Nova::KeyPair
+        properties:
+            name: y-key-pair
+        #    type: ssh
+
     anti-svrgrp: 
         type: OS::Nova::ServerGroup 
         properties: 
@@ -32,7 +38,7 @@ resources:
             name: aff-vm-1
             flavor: yardstick-flavor
             image: yardstick-image 
-            key_name: rex-key
+            key_name: { get_resource: y-key-pair }
             scheduler_hints: 
                 group: { get_resource: affinity-svrgrp} 
 
@@ -42,7 +48,7 @@ resources:
             name: aff-vm-2
             flavor: yardstick-flavor
             image: yardstick-image 
-            key_name: rex-key
+            key_name: { get_resource: y-key-pair }
             scheduler_hints: 
                 group: { get_resource: affinity-svrgrp }
 
@@ -52,7 +58,7 @@ resources:
             name: anti-vm-1
             flavor: yardstick-flavor
             image: yardstick-image 
-            key_name: rex-key
+            key_name: { get_resource: y-key-pair }
             scheduler_hints: 
                 group: { get_resource: anti-svrgrp }
 
@@ -62,6 +68,6 @@ resources:
             name: anti-vm-2
             flavor: yardstick-flavor
             image: yardstick-image 
-            key_name: rex-key
+            key_name: { get_resource: y-key-pair }
             scheduler_hints: 
                 group: { get_resource: anti-svrgrp }
