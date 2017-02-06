@@ -6,15 +6,17 @@
 # which accompanies this distribution, and is available at
 # http://www.apache.org/licenses/LICENSE-2.0
 # ############################################################################
+
 from __future__ import print_function
 from __future__ import absolute_import
+
 import logging
 import os
-import yaml
 from datetime import datetime
-
-import pkg_resources
 from xml.etree import ElementTree as ET
+
+import yaml
+import pkg_resources
 
 from yardstick import ssh
 from yardstick.common import openstack_utils
@@ -27,7 +29,7 @@ LOG = logging.getLogger(__name__)
 
 class Resize(base.Scenario):
     """
-    Execute ping between two hosts
+    Execute a cold migration for two hosts
 
     """
 
@@ -46,7 +48,7 @@ class Resize(base.Scenario):
         self.user = host.get('user', 'ubuntu')
         self.port = host.get("ssh_port", ssh.DEFAULT_PORT)
         self.ip = host.get('ip')
-        self.key = host.get('key_filename', '/root/.ssh/id_rsa')
+        self.key_filename = host.get('key_filename', '/root/.ssh/id_rsa')
         self.password = host.get('password')
 
         self.options = scenario_cfg['options']
@@ -56,36 +58,32 @@ class Resize(base.Scenario):
         self.cpu_set = self.options.get("cpu_set", '1,2,3,4,5,6')
         self.host_memory = self.options.get("host_memory", 512)
 
+        self.nova_client = openstack_utils.get_nova_client()
+        self.neutron_client = openstack_utils.get_neutron_client()
+        self.glance_client = openstack_utils.get_glance_client()
+
         node_file = os.path.join(consts.YARDSTICK_ROOT_PATH,
                                  scenario_cfg.get('node_file'))
         with open(node_file) as f:
             nodes = yaml.safe_load(TaskTemplate.render(f.read()))
         self.nodes = {a['name']: a for a in nodes['nodes']}
-        print(self.nodes)
 
-    def _get_host_node(self, host_list, node_type):
+    def _get_host_node(self, hosts, type):
         # get node for given node type
-        host_node = []
-        for host_name in host_list:
-            node = self.nodes.get(host_name, None)
-            print(node)
-            print('\n')
-            node_role = node.get('role', None)
-            if node_role == node_type:
-                host_node.append(host_name)
+        nodes = [a for a in hosts if self.nodes.get(a, {}).get('role') == type]
 
-        if len(host_node) == 0:
-            LOG.exception("Can't find %s node in the context!!!", node_type)
+        if not nodes:
+            LOG.error("Can't find %s node in the context!!!", type)
 
-        return host_node
+        return nodes
 
     def _ssh_host(self, node_name):
         # ssh host
         node = self.nodes.get(node_name, None)
-        user = node.get('user', 'ubuntu')
-        ssh_port = node.get("ssh_port", ssh.DEFAULT_PORT)
-        ip = node.get('ip', None)
-        pwd = node.get('password', None)
+        user = str(node.get('user', 'ubuntu'))
+        ssh_port = str(node.get("ssh_port", ssh.DEFAULT_PORT))
+        ip = str(node.get('ip', None))
+        pwd = str(node.get('password', None))
         key_fname = node.get('key_filename', '/root/.ssh/id_rsa')
 
         if pwd is not None:
@@ -105,15 +103,17 @@ class Resize(base.Scenario):
         if self.password is not None:
             LOG.info("Log in via pw, user:%s, host:%s, pw:%s",
                      self.user, self.ip, self.password)
-            self.client = ssh.SSH(self.user, self.ip, password=self.password,
-                                  port=self.port)
+            self.connection = ssh.SSH(self.user, self.ip,
+                                      password=self.password,
+                                      port=self.port)
         else:
             LOG.info("Log in via key, user:%s, host:%s, key_filename:%s",
-                     self.user, self.ip, self.key)
-            self.client = ssh.SSH(self.user, self.ip, key_filename=self.key,
-                                  port=self.port)
+                     self.user, self.ip, self.key_filename)
+            self.connection = ssh.SSH(self.user, self.ip,
+                                      key_filename=self.key_filename,
+                                      port=self.port)
 
-        self.client.wait(timeout=600)
+        self.connection.wait(timeout=600)
 
     def mysetup(self):
         """scenario setup"""
@@ -155,6 +155,17 @@ class Resize(base.Scenario):
             if status:
                 raise RuntimeError(stderr)
 
+    def _write_remote_file(self):
+        self._get_ssh_client()
+        cmd = "echo 'Hello World!' > resize.data"
+        self.connection.execute(cmd)
+
+    def _check_file_content(self):
+        self._get_ssh_client()
+        cmd = 'cat resize.data'
+        status, stdout, stderr = self.connection.execute(cmd)
+        print(stdout.strip())
+
     def run(self, result):
 
         self._write_remote_file()
@@ -172,16 +183,21 @@ class Resize(base.Scenario):
         vm2_origin_flavor_name = self.scenario_cfg['vm2_origin_flavor']
         vm2_new_flavor_name = self.scenario_cfg['vm2_new_flavor']
 
-        server = self._create_server(vm2_server_name, vm2_image_name,
-                                     vm2_origin_flavor_name)
+        network_id = openstack_utils.get_network_id(self.neutron_client,
+                                                    'ext-net')
+        image_id = openstack_utils.get_image_id(self.glance_client,
+                                                vm2_image_name)
 
-        data = self._check_numa_node(server.id)
+        self.instance = openstack_utils.create_instance_and_wait_for_active(
+            vm2_origin_flavor_name, image_id, network_id,
+            instance_name=vm2_server_name)
+
+        data = self._check_numa_node(self.instance.id)
         print(data)
 
-        openstack_utils.check_status('ACTIVE', vm2_server_name, 20, 5)
         duration = self._do_resize(vm2_server_name, vm2_new_flavor_name)
 
-        data = self._check_numa_node(server.id)
+        data = self._check_numa_node(self.instance.id)
         print(data)
 
         print('The duration is {}'.format(duration))
@@ -189,6 +205,7 @@ class Resize(base.Scenario):
 
     def _check_numa_node(self, server_id):
         for compute_node in self.compute_node_name:
+            print(compute_node)
             self._ssh_host(compute_node)
 
         cmd = "virsh dumpxml %s" % server_id
@@ -216,31 +233,6 @@ class Resize(base.Scenario):
         duration = (t2 - t1).seconds
 
         return duration
-
-    def _write_remote_file(self):
-        self._get_ssh_client()
-        cmd = "echo 'Hello World!' > resize.data"
-        self.client.execute(cmd)
-
-    def _check_file_content(self):
-        self._get_ssh_client()
-        cmd = 'cat resize.data'
-        status, stdout, stderr = self.client.execute(cmd)
-        print(stdout.strip())
-
-    def _create_server(self, server_name, image_name, flavor_name):
-        nova_client = openstack_utils.get_nova_client()
-        neutron_client = openstack_utils.get_neutron_client()
-
-        image = openstack_utils.get_image_by_name(image_name)
-
-        flavor = openstack_utils.get_flavor_by_name(flavor_name)
-
-        network_id = openstack_utils.get_network_id(neutron_client, 'ext-net')
-
-        nic = [{'net-id': network_id}]
-
-        return nova_client.servers.create(server_name, image, flavor, nics=nic)
 
     def myteardown(self):
         """teardown the benchmark"""
