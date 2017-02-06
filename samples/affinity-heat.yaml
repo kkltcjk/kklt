@@ -1,0 +1,67 @@
+heat_template_version: 2014-10-16 
+
+description: affinity test
+
+#parameters: 
+#    service-flavour: 
+#    type: string 
+#    default: rhel6-cloud.1.2 
+#    image: 
+#    type: string 
+#    default: redhat6 
+#    key_name: 
+#    type: string 
+#    default: mykey 
+
+resources: 
+    anti-svrgrp: 
+        type: OS::Nova::ServerGroup 
+        properties: 
+            name: anti-svrgrp 
+            policies: [ 'anti-affinity' ] 
+
+    affinity-svrgrp: 
+        type: OS::Nova::ServerGroup 
+        properties: 
+            name: affinity-svrgrp 
+            policies: [ 'affinity' ] 
+
+    aff-vm-1: 
+        type: OS::Nova::Server 
+        properties: 
+            name: aff-vm-1
+            flavor: yardstick-flavor
+            image: yardstick-image 
+            key_name: rex-key
+            scheduler_hints: 
+                group: { get_resource: affinity-svrgrp} 
+
+    aff-vm-2: 
+        type: OS::Nova::Server 
+        properties: 
+            name: aff-vm-2
+            flavor: yardstick-flavor
+            image: yardstick-image 
+            key_name: rex-key
+            scheduler_hints: 
+                group: { get_resource: affinity-svrgrp }
+
+    anti-vm-1: 
+        type: OS::Nova::Server 
+        properties: 
+            name: anti-vm-1
+            flavor: yardstick-flavor
+            image: yardstick-image 
+            key_name: rex-key
+            scheduler_hints: 
+                group: { get_resource: anti-svrgrp }
+
+    anti-vm-2: 
+        type: OS::Nova::Server 
+        properties: 
+            name: anti-vm-2
+            flavor: yardstick-flavor
+            image: yardstick-image 
+            key_name: rex-key
+            scheduler_hints: 
+                group: { get_resource: anti-svrgrp }
