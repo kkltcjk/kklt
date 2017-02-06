@@ -1,0 +1,47 @@
+---
+# Sample benchmark task config file
+# Test the ability for supporting vlan and vxlan network
+
+schema: "yardstick:task:0.1"
+
+scenarios:
+-
+  type: VlanVxlan
+
+  runner:
+    type: Iteration
+    iterations: 1
+
+contexts:
+-
+  name: demo1
+  user: cirros
+  heat_template: ./yardstick/resources/files/servers_in_new_vlan_net.yaml
+  heat_parameters:
+    image: cirros-0.3.3
+    flavor: yardstick-flavor
+    key_name: yardstick_key
+    public_net: "ext-net"
+    private_net_name: "vlan-net"
+    private_net_type: "vlan"
+    physical_network: "physnet"
+    segmentation_id: "100"
+    private_net_cidr: "10.0.1.0/24"
+    private_net_gateway: "10.0.1.1"
+    private_net_pool_start: "10.0.1.2"
+    private_net_pool_end: "10.0.1.200"
+
+-
+  name: demo2
+  user: cirros
+  heat_template: ./yardstick/resources/files/servers_in_new_vxlan_net.yaml
+  heat_parameters:
+    image: cirros-0.3.3
+    flavor: yardstick-flavor
+    key_name: yardstick_key
+    public_net: "ext-net"
+    private_net_name: "vxlan-net"
+    private_net_cidr: "10.0.2.0/24"
+    private_net_gateway: "10.0.2.1"
+    private_net_pool_start: "10.0.2.2"
+    private_net_pool_end: "10.0.2.200"

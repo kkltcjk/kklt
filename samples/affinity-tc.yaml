@@ -1,0 +1,19 @@
+---
+# Sample benchmark task config file
+# measure network latency using ping
+
+schema: "yardstick:task:0.1"
+
+scenarios:
+-
+  type: Affinity
+  runner:
+    type: Duration
+    duration: 120
+    interval: 1
+
+context:
+
+  name: aff-template
+  user: cirros
+  heat_template: samples/affinity-heat.yaml

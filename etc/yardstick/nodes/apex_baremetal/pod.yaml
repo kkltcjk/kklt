@@ -15,29 +15,29 @@ nodes:
     name: node1
     role: Controller
     ip: 10.10.10.6
-    user: root
+    user: heat-admin
     key_filename: /root/.ssh/id_rsa
 -
     name: node2
     role: Controller
     ip: 10.10.10.10
-    user: root
+    user: heat-admin
     key_filename: /root/.ssh/id_rsa
 -
     name: node3
     role: Controller
     ip: 10.10.10.8
-    user: root
+    user: heat-admin
     key_filename: /root/.ssh/id_rsa
 -
     name: node4
     role: Compute
     ip: 10.10.10.5
-    user: root
+    user: heat-admin
     key_filename: /root/.ssh/id_rsa
 -
     name: node5
     role: Compute
     ip: 10.10.10.4
-    user: root
+    user: heat-admin
     key_filename: /root/.ssh/id_rsa
