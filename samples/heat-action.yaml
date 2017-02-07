@@ -15,9 +15,9 @@ scenarios:
 contexts:
 -
   name: demo-template
-  user: cirros
+  user: ubuntu
   heat_template: samples/demo-heat.yaml
 -
   name: demo-template2
-  user: cirros
+  user: ubuntu
   heat_template: samples/demo-heat2.yaml
