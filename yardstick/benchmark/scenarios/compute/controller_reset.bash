@@ -25,6 +25,8 @@ else
   if [[ $(service nova-scheduler status | grep running) ]]; then
     echo "restarting nova-scheduler.service"
     service nova-scheduler restart
+    service nova-api restart
+    service nova-conductor restart
   elif [[ $(service openstack-nova-scheduler status | grep running) ]]; then
     echo "restarting openstack-nova-scheduler.service"
     service openstack-nova-scheduler restart

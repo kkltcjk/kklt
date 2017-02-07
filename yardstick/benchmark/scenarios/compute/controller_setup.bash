@@ -10,7 +10,9 @@
 
 set -e
 
+sed -i '/allow_resize_to_same_host/d' /etc/nova/nova.conf
 sed -i '/DEFAULT/a allow_resize_to_same_host=True' /etc/nova/nova.conf
+sed -i '/scheduler_default_filters/d' /etc/nova/nova.conf
 sed -i '/DEFAULT/a scheduler_default_filters=NUMATopologyFilter,AggregateInstanceExtraSpecsFilter' /etc/nova/nova.conf
 
 if which systemctl 2>/dev/null; then
@@ -25,6 +27,8 @@ else
   if [[ $(service nova-scheduler status | grep running) ]]; then
     echo "restarting nova-scheduler.service"
     service nova-scheduler restart
+    service nova-api restart
+    service nova-conductor restart
   elif [[ $(service openstack-nova-scheduler status | grep running) ]]; then
     echo "restarting openstack-nova-scheduler.service"
     service openstack-nova-scheduler restart
