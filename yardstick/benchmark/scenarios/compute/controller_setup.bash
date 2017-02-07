@@ -10,6 +10,7 @@
 
 set -e
 
+sed -i '/DEFAULT/a allow_resize_to_same_host=True' /etc/nova/nova.conf
 sed -i '/DEFAULT/a scheduler_default_filters=NUMATopologyFilter,AggregateInstanceExtraSpecsFilter' /etc/nova/nova.conf
 
 if which systemctl 2>/dev/null; then
