@@ -17,7 +17,7 @@ parameters:
   external_net_name:
     type: string
     description: Name of the external network which management network will connect to
-    default: admin_floating_net
+    default: external
 
 resources:
   flavor:
