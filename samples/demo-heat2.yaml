@@ -7,6 +7,6 @@ resources:
     type: OS::Nova::Server
     properties:
       name: heataction-vm2
-      key_name: rex-key
+      key_name: yardstick_key
       image: cirros-0.3.3
       flavor: yardstick-flavor
