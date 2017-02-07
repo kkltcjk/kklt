@@ -13,7 +13,34 @@ scenarios:
     interval: 1
 
 context:
-
-  name: aff-template
+#-
+#  name: aff-template
+#  user: cirros
+#  heat_template: samples/affinity-heat.yaml
+#-
+  name: aff-heat-py
+  image: cirros-0.3.3
+  flavor: yardstick-flavor
   user: cirros
-  heat_template: samples/affinity-heat.yaml
+
+  server_groups:
+    affGROUP:
+      policy: "affinity"
+    antiGROUP:
+      policy: "anti-affinity"
+
+  servers:
+    apple:
+      floating_ip: true
+      server_group: "affGROUP"
+    angel:
+      server_group: "affGROUP"
+    banana:
+      floating_ip: true
+      server_group: "antiGROUP"
+    box:
+      server_group: "antiGROUP"
+
+  networks:
+    test:
+      cidr: '10.0.1.0/24'
