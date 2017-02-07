@@ -1,0 +1,53 @@
+---
+
+schema: "yardstick:task:0.1"
+{% set image = image or "cirros-0.3.3" %}
+{% set run_step = run_step or 'setup,run,teardown' %}
+scenarios:
+-
+  type: Migrate
+
+  options:
+    cpu_set: 0,2,4,6
+    host_memory: 512
+    host: node1,node2,node3,node4,node5
+
+  host: host.migrate
+  target: target.migrate
+
+  runner:
+    type: Iteration
+    iteration: 1
+    run_step: {{run_step}}
+    pre-start-action:
+        command: "bash ./yardstick/benchmark/scenarios/compute/before_resize.sh"
+    post-stop-action:
+        command: "bash ./yardstick/benchmark/scenarios/compute/after_resize.sh"
+
+  flavor: yardstick-flavor
+  image: {{image}}
+  network: ext-net
+
+  node_file: etc/yardstick/nodes/compass_sclab_virtual/pod.yaml
+
+context:
+  name: migrate
+  image: {{image}}
+  flavor: yardstick-flavor
+  user: cirros
+
+  placement_groups:
+    pgrp1:
+      policy: "availability"
+
+  servers:
+    host:
+      floating_ip: true
+      placement: "pgrp1"
+    target:
+      placement: "pgrp1"
+      floating_ip: true
+
+  networks:
+    test:
+      cidr: '10.0.1.0/24'
