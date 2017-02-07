@@ -142,7 +142,10 @@ class CpuPinning(base.Scenario):
         LOG.debug("Executing command: %s", cmd)
         status, stdout, stderr = self.client.execute(cmd)
         if status:
+            result.update({"Test": "Failed"})
             raise RuntimeError(stderr)
+        else:
+            result.update({"Test": "Passed"})
 
         pinning = []
         root = ET.fromstring(stdout)
