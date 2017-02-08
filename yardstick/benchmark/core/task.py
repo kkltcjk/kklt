@@ -508,7 +508,11 @@ def change_server_name(scenario, suffix):
         pass
 
     try:
-        scenario['target'] += suffix
+        target = scenario['target']
+        if isinstance(target, dict):
+            scenario['target']['name'] += suffix
+        else:
+            scenario['target'] += suffix
     except KeyError:
         pass
 
