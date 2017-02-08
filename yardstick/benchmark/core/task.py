@@ -504,6 +504,11 @@ def change_server_name(scenario, suffix):
         pass
 
     try:
+        scenario['host']['name'] += suffix
+    except KeyError:
+        pass
+
+    try:
         scenario['target'] += suffix
     except KeyError:
         pass
