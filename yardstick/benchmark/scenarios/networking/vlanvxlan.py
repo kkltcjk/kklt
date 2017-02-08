@@ -27,7 +27,7 @@ class VlanVxlan(base.Scenario):
         self.scenario_cfg = scenario_cfg
         self.context_cfg = context_cfg
         self.nova_client = op_utils.get_nova_client()
-        self.testcase_status = "Passed"
+        self.testcase_status = 1
         self.setup_done = False
 
     def setup(self):
@@ -42,6 +42,6 @@ class VlanVxlan(base.Scenario):
         for server in self.nova_client.servers.list():
             print(server.name, server.id, server.status, server.networks)
             if server.status != "ACTIVE":
-                self.testcase_status = "Failed"
+                self.testcase_status = 0
 
         result.update({"Test": self.testcase_status})

@@ -10,7 +10,7 @@ scenarios:
 -
   type: CpuPinning
   options:
-    cpu_set: 2,4,6,8,10,12,14
+    cpu_set: 2,4,6,8,10,12
     host_memory: 512
     host: host1,host2,host3,host4
     image: cirros-0.3.3
