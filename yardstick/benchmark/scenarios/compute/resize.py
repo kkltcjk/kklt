@@ -133,10 +133,10 @@ class Resize(base.Scenario):
             self._ssh_host(controller_node)
             # copy script to host
             self.client._put_file_shell(
-                self.controller_setup_script, '~/controller_setup.sh')
+                self.controller_setup_script, '~/controller_setup.bash')
             # setup controller node
             status, stdout, stderr = self.client.execute(
-                "sudo bash controller_setup.sh")
+                "sudo bash controller_setup.bash")
             if status:
                 raise RuntimeError(stderr)
 
@@ -147,10 +147,10 @@ class Resize(base.Scenario):
             self._ssh_host(compute_node)
             # copy script to host
             self.client._put_file_shell(
-                self.compute_setup_script, '~/compute_setup.sh')
+                self.compute_setup_script, '~/compute_setup.bash')
             # setup compute node
             status, stdout, stderr = self.client.execute(
-                "sudo bash compute_setup.sh %s %d" % (self.cpu_set,
+                "sudo bash compute_setup.bash %s %d" % (self.cpu_set,
                                                       self.host_memory))
             if status:
                 raise RuntimeError(stderr)
@@ -201,6 +201,7 @@ class Resize(base.Scenario):
         print(data)
 
         print('The duration is {}'.format(duration))
+        openstack_utils.delete_instance(self.nova_client, self.instance.id)
         self.myteardown()
 
     def _check_numa_node(self, server_id):
@@ -250,10 +251,10 @@ class Resize(base.Scenario):
             self._ssh_host(compute_node)
             # copy script to host
             self.client._put_file_shell(
-                self.compute_reset_script, '~/compute_reset.sh')
+                self.compute_reset_script, '~/compute_reset.bash')
             # reset compute node
             status, stdout, stderr = self.client.execute(
-                "sudo bash compute_reset.sh")
+                "sudo bash compute_reset.bash")
             if status:
                 raise RuntimeError(stderr)
 
@@ -262,9 +263,9 @@ class Resize(base.Scenario):
             self._ssh_host(controller_node)
             # copy script to host
             self.client._put_file_shell(
-                self.controller_reset_script, '~/controller_reset.sh')
+                self.controller_reset_script, '~/controller_reset.bash')
             # reset controller node
             status, stdout, stderr = self.client.execute(
-                "sudo bash controller_reset.sh")
+                "sudo bash controller_reset.bash")
             if status:
                 raise RuntimeError(stderr)
