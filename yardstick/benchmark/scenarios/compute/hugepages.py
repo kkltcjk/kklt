@@ -11,6 +11,7 @@ from __future__ import absolute_import
 
 import logging
 
+import time
 import pkg_resources
 
 import yardstick.ssh as ssh
@@ -31,6 +32,7 @@ class Hugepages(base.Scenario):
     CONTROLLER_RESET_SCRIPT = "controller_reset.bash"
     COMPUTE_RESET_SCRIPT = "compute_reset.bash"
     HUGEPAGES_FREE_SCRIPT = "hugepages_free.bash"
+    HUGEPAGES_CONFIG_SCRIPT = "hugepages_config.bash"
 
     def __init__(self, scenario_cfg, context_cfg):
         self.scenario_cfg = scenario_cfg
@@ -121,6 +123,9 @@ class Hugepages(base.Scenario):
         self.hugepages_free_script = pkg_resources.resource_filename(
             "yardstick.benchmark.scenarios.compute",
             Hugepages.HUGEPAGES_FREE_SCRIPT)
+        self.hugepages_config_script = pkg_resources.resource_filename(
+            "yardstick.benchmark.scenarios.compute",
+            Hugepages.HUGEPAGES_CONFIG_SCRIPT)
 
         self.compute_node_name = self._get_host_node(self.host_list, 'Compute')
         LOG.debug("The Compute Node is: %s", self.compute_node_name)
@@ -131,6 +136,8 @@ class Hugepages(base.Scenario):
                 self.compute_setup_script, '~/compute_setup.sh')
             self.client._put_file_shell(
                 self.hugepages_free_script, '~/hugepages_free.sh')
+            self.client._put_file_shell(
+                self.hugepages_config_script, '~/hugepages_config.sh')
             # setup compute node
             status, stdout, stderr = self.client.execute(
                 "sudo bash compute_setup.sh %s %d" % (self.cpu_set,
@@ -159,16 +166,26 @@ class Hugepages(base.Scenario):
         op_utils.delete_instance(self.nova_client, self.instance.id)
         result.update({"hugepagesz-2M":
                       self._pof(free_mem_before == free_mem_after+512)})
+        result.update({"2M-free-mem_before": free_mem_before})
+        result.update({"2M-free-mem_after": free_mem_after})
         # flavor2
         network_id = op_utils.get_network_id(self.neutron_client,
                                              self.external_network)
         image_id = op_utils.get_image_id(self.glance_client, self.image)
         free_mem_before = self._check_compute_node_free_hugepage(
                         self.compute_node_name[1])
+        # config hugepages to be 1G and reboot
+        status, stdout, stderr = self.client.execute(
+            "sudo bash hugepages_config.sh")
+        # wait to reeboot
+        LOG.info("node restarting... wait 120s")
+        time.sleep(120)
+        LOG.info("node restarting... wait ends")
+
+        self._ssh_host(self.compute_node_name[1])
         self.instance = op_utils.create_instance_and_wait_for_active(
                         self.flavor2, image_id, network_id,
                         instance_name="hugepages-1G-VM")
-
         free_mem_after = self._check_compute_node_free_hugepage(
                     self.compute_node_name[1])
 
@@ -177,11 +194,13 @@ class Hugepages(base.Scenario):
         op_utils.delete_instance(self.nova_client, self.instance.id)
         result.update({"hugepagesz-1G":
                       self._pof(free_mem_before == free_mem_after+1)})
+        result.update({"1G-free-mem_before": free_mem_before})
+        result.update({"1G-free-mem_after": free_mem_after})
 
     def _pof(self, condition):
         """Pass or FAIL helper"""
 
-        return "PASS" if condition else "FAIL"
+        return 1 if condition else 0
 
     def _check_compute_node_free_hugepage(self, compute_node_name):
         self._ssh_host(compute_node_name)

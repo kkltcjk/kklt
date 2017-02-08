@@ -151,7 +151,7 @@ class Resize(base.Scenario):
             # setup compute node
             status, stdout, stderr = self.client.execute(
                 "sudo bash compute_setup.bash %s %d" % (self.cpu_set,
-                                                      self.host_memory))
+                                                        self.host_memory))
             if status:
                 raise RuntimeError(stderr)
 
@@ -193,17 +193,48 @@ class Resize(base.Scenario):
             vm2_origin_flavor_name, image_id, network_id,
             instance_name=vm2_server_name)
 
-        data = self._check_numa_node(self.instance.id)
-        print(data)
+        data1 = self._check_numa_node(self.instance.id)
+        print(data1)
 
         duration2 = self._do_resize(vm2_server_name, vm2_new_flavor_name)
 
-        data = self._check_numa_node(self.instance.id)
-        print(data)
+        data2 = self._check_numa_node(self.instance.id)
+        print(data2)
+
+        status2 = self._check_vm2_status(data1, data2)
+        status = 1 if status1 and status2 else 0
 
         print('The duration is {}'.format(duration2))
+
+        test_result = {
+            'status': status,
+            'duration1': duration1,
+            'duration2': duration2
+        }
+        print(test_result)
+        result.update(test_result)
         openstack_utils.delete_instance(self.nova_client, self.instance.id)
         self.myteardown()
+
+    def _check_vm2_status(self, info1, info2):
+        nodepin_ok = True
+        for i in info1['pinning']:
+            ok = 0
+            for j in info2['pinning']:
+                if i['nodeset'] == j['nodeset']:
+                    ok = 1
+                    break
+            if ok == 0:
+                nodepin_ok = False
+                break
+
+        vcpupin_ok = True
+        for i in info2['vcpupin']:
+            if i['cpuset'] not in self.cpu_set.split(','):
+                vcpupin_ok = False
+                break
+
+        return nodepin_ok and vcpupin_ok
 
     def _check_numa_node(self, server_id):
         for compute_node in self.compute_node_name:
@@ -215,8 +246,8 @@ class Resize(base.Scenario):
         if status:
             raise RuntimeError(stderr)
         root = ET.fromstring(stdout)
-        vcpupin = [a for a in root.iter('vcpupin')]
-        pinning = [a for a in root.iter('memnode')]
+        vcpupin = [a.attrib for a in root.iter('vcpupin')]
+        pinning = [a.attrib for a in root.iter('memnode')]
         return {"pinning": pinning, 'vcpupin': vcpupin}
 
     def _do_resize(self, server_name, new_flavor_name):
