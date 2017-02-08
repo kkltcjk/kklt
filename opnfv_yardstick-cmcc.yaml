@@ -13,6 +13,8 @@ test_cases:
     task_args:
         cpu_set: "2,4,5,8"
 -
+    file_name: resize.yaml
+-
     file_name: attach_nic.yaml
 -
     file_name: vlan_vxlan.yaml
