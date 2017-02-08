@@ -113,7 +113,7 @@
             "total": false,
             "values": false
           },
-          "lines": true,
+          "lines": false,
           "linewidth": 1,
           "links": [],
           "nullPointMode": "connected",
@@ -276,20 +276,7 @@
             {
               "alias": "Test status (1 means passed, 0 means failed)",
               "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "params": [
-                    "$interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
+              "groupBy": [],
               "measurement": "numa_pinning",
               "policy": "default",
               "refId": "B",
@@ -301,10 +288,6 @@
                       "Test"
                     ],
                     "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
                   }
                 ]
               ],
@@ -315,7 +298,7 @@
           "timeShift": null,
           "title": "虚拟机支持 NUMA",
           "tooltip": {
-            "msResolution": false,
+            "msResolution": true,
             "shared": true,
             "sort": 0,
             "value_type": "cumulative"
@@ -565,6 +548,43 @@
           "steppedLine": false,
           "targets": [
             {
+              "alias": "vm-1冷迁移所用时间 (s)",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "resize",
+              "policy": "default",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "duration1"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": []
+            },
+            {
               "alias": "Test status (1 means passed, 0 means failed)",
               "dsType": "influxdb",
               "groupBy": [
@@ -581,6 +601,7 @@
                   "type": "fill"
                 }
               ],
+              "measurement": "resize",
               "policy": "default",
               "refId": "B",
               "resultFormat": "time_series",
@@ -588,7 +609,44 @@
                 [
                   {
                     "params": [
-                      "value"
+                      "status"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": []
+            },
+            {
+              "alias": "vm-2冷迁移所用时间 (s)",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "resize",
+              "policy": "default",
+              "refId": "C",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "duration2"
                     ],
                     "type": "field"
                   },
@@ -605,7 +663,7 @@
           "timeShift": null,
           "title": "虚拟机冷迁移",
           "tooltip": {
-            "msResolution": false,
+            "msResolution": true,
             "shared": true,
             "sort": 0,
             "value_type": "cumulative"
@@ -624,8 +682,8 @@
               "show": true
             },
             {
-              "format": "short",
-              "label": "",
+              "format": "s",
+              "label": "Cold migration time",
               "logBase": 1,
               "max": null,
               "min": null,
@@ -733,7 +791,7 @@
                 [
                   {
                     "params": [
-                      "value"
+                      "test"
                     ],
                     "type": "field"
                   },
@@ -743,7 +801,8 @@
                   }
                 ]
               ],
-              "tags": []
+              "tags": [],
+              "measurement": "affinity-tc"
             }
           ],
           "timeFrom": "1d",
@@ -1209,7 +1268,7 @@
                 [
                   {
                     "params": [
-                      "value"
+                      "test"
                     ],
                     "type": "field"
                   },
@@ -1219,7 +1278,8 @@
                   }
                 ]
               ],
-              "tags": []
+              "tags": [],
+              "measurement": "affinity-tc"
             }
           ],
           "timeFrom": "1d",
@@ -1323,20 +1383,8 @@
             {
               "alias": "Test status (1 means passed, 0 means failed)",
               "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "params": [
-                    "$interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
+              "groupBy": [],
+              "measurement": "heataction-tc",
               "policy": "default",
               "refId": "A",
               "resultFormat": "time_series",
@@ -1344,13 +1392,9 @@
                 [
                   {
                     "params": [
-                      "value"
+                      "test"
                     ],
                     "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
                   }
                 ]
               ],
@@ -1431,7 +1475,7 @@
   },
   "refresh": false,
   "schemaVersion": 12,
-  "version": 69,
+  "version": 79,
   "links": [],
   "gnetId": null
 }
