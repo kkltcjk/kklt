@@ -7,6 +7,6 @@ resources:
     type: OS::Nova::Server
     properties:
       name: heataction-vm1
-      key_name: yardstick_key
+      # key_name: yardstick_key
       image: yardstick-image
       flavor: yardstick-flavor

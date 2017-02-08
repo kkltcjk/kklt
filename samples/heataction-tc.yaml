@@ -16,8 +16,8 @@ contexts:
 -
   name: demo-template
   user: ubuntu
-  heat_template: samples/demo-heat.yaml
+  heat_template: samples/heataction-template-1.yaml
 -
   name: demo-template2
   user: ubuntu
-  heat_template: samples/demo-heat2.yaml
+  heat_template: samples/heataction-template-2.yaml
