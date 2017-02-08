@@ -3,13 +3,14 @@
 # Perform a pinning of virtual machine instances to dedicated NUMA node.
 
 schema: "yardstick:task:0.1"
+{% set cpu_set = cpu_set or '2,4,5,8' %}
 {% set run_step = run_step or 'setup,run,teardown' %}
 
 scenarios:
 -
   type: NumaPinning
   options:
-    cpu_set: 2,4,6,8
+    cpu_set: {{cpu_set}}
     host_memory: 512
     host: host1,host2,host3,host4
     image: cirros-0.3.3

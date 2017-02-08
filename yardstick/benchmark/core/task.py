@@ -499,12 +499,20 @@ def check_environment():
 
 def change_server_name(scenario, suffix):
     try:
-        scenario['host'] += suffix
+        host = scenario['host']
+        if isinstance(host, dict):
+            scenario['host']['name'] += suffix
+        else:
+            scenario['host'] += suffix
     except KeyError:
         pass
 
     try:
-        scenario['target'] += suffix
+        target = scenario['target']
+        if isinstance(target, dict):
+            scenario['target']['name'] += suffix
+        else:
+            scenario['target'] += suffix
     except KeyError:
         pass
 

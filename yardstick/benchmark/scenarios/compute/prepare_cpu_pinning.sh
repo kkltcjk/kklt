@@ -37,11 +37,13 @@ prepare_aggregate()
     # Hosts that are not intended to be targets for pinned instances should be
     # added to the "regular" host aggregate
 
-    nova aggregate-add-host pinned-cpu host4
-    # openstack aggregate add host pinned-cpu host4
+    compute_nodes=($(openstack availability zone list --long | grep nova-compute | sort | awk '{print $7}'))
 
-    nova aggregate-add-host regular host5
-    # openstack aggregate add host regular host5
+    nova aggregate-add-host pinned-cpu ${compute_nodes[0]}
+    # openstack aggregate add host pinned-cpu ${compute_nodes[0]}
+
+    nova aggregate-add-host regular ${compute_nodes[1]}
+    # openstack aggregate add host regular ${compute_nodes[1]}
 
     # Before creating the new flavor for cpu-pinning instances update all existing
     # flavors so that their extra specifications match them to the compute hosts in
@@ -60,7 +62,7 @@ prepare_aggregate()
     # true. This denotes that all instances created using this flavor will be sent
     # to hosts in host aggregates with pinned=true in their aggregate metadata:
 
-    openstack flavor create --id 101 --ram 512 --disk 3 --vcpus 4 yardstick-pinned-flavor
+    openstack flavor create --id 101 --ram 512 --disk 3 --vcpus 3 yardstick-pinned-flavor
 
     # nova flavor-key yardstick-pinned-flavor set hw:cpu_policy=dedicated
     openstack flavor set --property hw:cpu_policy=dedicated yardstick-pinned-flavor
