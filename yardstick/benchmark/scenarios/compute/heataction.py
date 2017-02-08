@@ -10,13 +10,11 @@
 from __future__ import absolute_import
 
 import logging
-import time
-
-import pkg_resources
+import subprocess
+from yardstick.common import constants as config
 
 import yardstick.ssh as ssh
 from yardstick.benchmark.scenarios import base
-import yardstick.common.openstack_utils as op_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -27,11 +25,7 @@ class Heataction(base.Scenario):
 
     __scenario_type__ = "Heataction"
 
-    CONTROLLER_SETUP_SCRIPT = "controller_setup.bash"
-    COMPUTE_SETUP_SCRIPT = "compute_setup.bash"
-    CONTROLLER_RESET_SCRIPT = "controller_reset.bash"
-    COMPUTE_RESET_SCRIPT = "compute_reset.bash"
-    HUGEPAGES_FREE_SCRIPT = "hugepages_free.bash"
+    HEATACTION_CHECK_SCRIPT = "heataction_check.bash"
 
     def __init__(self, scenario_cfg, context_cfg):
         pass
@@ -73,12 +67,25 @@ class Heataction(base.Scenario):
 
     def run(self, result):
         """execute the benchmark"""
-        time.sleep(60)
+        vm1_image = self._fetch_diff('heataction-vm1')
+        vm2_image = self._fetch_diff('heataction-vm2')
+        LOG.debug("vm1 image name: %s, vm2 image name: %s",
+                      vm1_image, vm2_image)
+        result.update({'test': self._pof(vm1_image != vm2_image)})
+
+    def _fetch_diff(self, name):
+        """fetch diff feature of two template"""
+        HEATACTION_CHECK_PATH = \
+            'yardstick/benchmark/scenarios/compute/heataction-check.bash'
+        cmd = ['bash', HEATACTION_CHECK_PATH, name]
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                             cwd=config.YARDSTICK_REPOS_DIR)
+        return p.communicate()[0]
 
     def _pof(self, condition):
         """Pass or FAIL helper"""
 
-        return "PASS" if condition else "FAIL"
+        return 1 if condition else 0
 
     def teardown(self):
         """teardown the benchmark"""
