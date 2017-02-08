@@ -16,7 +16,7 @@ openstack aggregate create compute_node_2
 nova aggregate-set-metadata compute_node_1 hugepagesz=2M
 nova aggregate-set-metadata compute_node_2 hugepagesz=1G
 
-compute_nodes=($(openstack availability zone list --long | grep nova-compute | awk '{print $7}'))
+compute_nodes=($(openstack availability zone list --long | grep nova-compute | awk '{print $7}' | sort))
 
 openstack aggregate add host compute_node_1 ${compute_nodes[0]}
 openstack aggregate add host compute_node_2 ${compute_nodes[1]}
