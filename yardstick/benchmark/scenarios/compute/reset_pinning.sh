@@ -23,11 +23,13 @@ reset_aggregate()
 
     # remove hosts from corresponding Nova aggregates
 
-    nova aggregate-remove-host pinned-cpu host4
-    # openstack aggregate remove host pinned-cpu host4
+    compute_nodes=($(openstack availability zone list --long | grep nova-compute | sort | awk '{print $7}'))
 
-    nova aggregate-remove-host regular host5
-    # openstack aggregate remove host regular host5
+    nova aggregate-remove-host pinned-cpu ${compute_nodes[0]}
+    # openstack aggregate remove host pinned-cpu ${compute_nodes[0]}
+
+    nova aggregate-remove-host regular ${compute_nodes[1]}
+    # openstack aggregate remove host regular ${compute_nodes[1]}
 
     # Delete created Nova aggregates
 
