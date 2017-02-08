@@ -155,27 +155,28 @@ class Resize(base.Scenario):
             if status:
                 raise RuntimeError(stderr)
 
-    def _write_remote_file(self):
+    def _write_remote_file(self, word):
         self._get_ssh_client()
-        cmd = "echo 'Hello World!' > resize.data"
+        cmd = "echo {} > resize.data".format(word)
         self.connection.execute(cmd)
 
-    def _check_file_content(self):
+    def _check_file_content(self, word):
         self._get_ssh_client()
         cmd = 'cat resize.data'
         status, stdout, stderr = self.connection.execute(cmd)
-        print(stdout.strip())
+        return word == stdout.strip()
 
     def run(self, result):
 
-        self._write_remote_file()
+        word = 'Hello world!'
+        self._write_remote_file(word)
 
         server_name = self.scenario_cfg['host']
         new_flavor_name = self.scenario_cfg['vm1_new_flavor']
-        duration = self._do_resize(server_name, new_flavor_name)
-        print('The duration is {}'.format(duration))
+        duration1 = self._do_resize(server_name, new_flavor_name)
+        print('The duration is {}'.format(duration1))
 
-        self._check_file_content()
+        status1 = self._check_file_content(word)
 
         self.mysetup()
         vm2_server_name = '{}-2'.format(server_name)
@@ -195,18 +196,17 @@ class Resize(base.Scenario):
         data = self._check_numa_node(self.instance.id)
         print(data)
 
-        duration = self._do_resize(vm2_server_name, vm2_new_flavor_name)
+        duration2 = self._do_resize(vm2_server_name, vm2_new_flavor_name)
 
         data = self._check_numa_node(self.instance.id)
         print(data)
 
-        print('The duration is {}'.format(duration))
+        print('The duration is {}'.format(duration2))
         openstack_utils.delete_instance(self.nova_client, self.instance.id)
         self.myteardown()
 
     def _check_numa_node(self, server_id):
         for compute_node in self.compute_node_name:
-            print(compute_node)
             self._ssh_host(compute_node)
 
         cmd = "virsh dumpxml %s" % server_id
@@ -214,11 +214,10 @@ class Resize(base.Scenario):
         status, stdout, stderr = self.client.execute(cmd)
         if status:
             raise RuntimeError(stderr)
-        pinning = []
         root = ET.fromstring(stdout)
-        for memnode in root.iter('memnode'):
-            pinning.append(memnode.attrib)
-        return {"pinning": pinning}
+        vcpupin = [a for a in root.iter('vcpupin')]
+        pinning = [a for a in root.iter('memnode')]
+        return {"pinning": pinning, 'vcpupin': vcpupin}
 
     def _do_resize(self, server_name, new_flavor_name):
         nova_client = openstack_utils.get_nova_client()
