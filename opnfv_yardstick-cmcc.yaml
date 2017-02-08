@@ -19,4 +19,6 @@ test_cases:
 -
     file_name: vlan_vxlan.yaml
 -
+    file_name: affinity-tc.yaml
+-
     file_name: heataction-tc.yaml
