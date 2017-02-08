@@ -37,11 +37,13 @@ prepare_aggregate()
     # Hosts that are not intended to be targets for pinned instances should be
     # added to the "regular" host aggregate
 
-    nova aggregate-add-host pinned-cpu host4
-    # openstack aggregate add host pinned-cpu host4
+    compute_nodes=($(openstack availability zone list --long | grep nova-compute | awk '{print $7}'))
 
-    nova aggregate-add-host regular host5
-    # openstack aggregate add host regular host5
+    nova aggregate-add-host pinned-cpu ${compute_nodes[0]}
+    # openstack aggregate add host pinned-cpu ${compute_nodes[0]}
+
+    nova aggregate-add-host regular ${compute_nodes[1]}
+    # openstack aggregate add host regular ${compute_nodes[1]}
 
     # Before creating the new flavor for cpu-pinning instances update all existing
     # flavors so that their extra specifications match them to the compute hosts in
