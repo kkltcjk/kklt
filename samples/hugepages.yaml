@@ -6,6 +6,7 @@
 schema: "yardstick:task:0.1"
 {% set run_step = run_step or 'setup,run,teardown' %}
 {% set file = file or 'etc/yardstick/nodes/apex_baremetal/pod.yaml' %}
+{% set external_network = external_network or 'external' %}
 
 scenarios:
 -
@@ -17,7 +18,7 @@ scenarios:
     image: cirros-0.3.3
     flavor1: yardstick-hugepages-flavor1
     flavor2: yardstick-hugepages-flavor2
-    external_network: external
+    external_network: {{external_network}}
 
   nodes:
     host1: node1.demo
