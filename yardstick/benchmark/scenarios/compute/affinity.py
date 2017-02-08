@@ -10,6 +10,8 @@
 from __future__ import absolute_import
 
 import logging
+import subprocess
+from yardstick.common import constants as config
 
 import yardstick.ssh as ssh
 from yardstick.benchmark.scenarios import base
@@ -30,7 +32,8 @@ class Affinity(base.Scenario):
     HUGEPAGES_FREE_SCRIPT = "hugepages_free.bash"
 
     def __init__(self, scenario_cfg, context_cfg):
-        pass
+        self.scenario_cfg = scenario_cfg
+        self.context_cfg = context_cfg
 
     def _get_host_node(self, host_list, node_type):
         # get node for given node type
@@ -69,12 +72,30 @@ class Affinity(base.Scenario):
 
     def run(self, result):
         """execute the benchmark"""
-        pass
+        aff_vm1 = self._get_host_location('angel')
+        aff_vm2 = self._get_host_location('apple')
+        anti_vm1 = self._get_host_location('banana')
+        anti_vm2 = self._get_host_location('box')
+        LOG.debug("aff_vm1 locates: %s, aff_vm2 locates: %s",
+                  aff_vm1, aff_vm2)
+        LOG.debug("anti_vm1 locates: %s, anti_vm2 locates: %s",
+                  anti_vm1, anti_vm2)
+        result.update({'test':
+                      self._pof(aff_vm1 == aff_vm2 and anti_vm1 != anti_vm2)})
+
+    def _get_host_location(self, name):
+        """get host location of a vm"""
+        AFFINITY_CHECK_PATH = \
+            'yardstick/benchmark/scenarios/compute/affinity-check.bash'
+        cmd = ['bash', AFFINITY_CHECK_PATH, name]
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                             cwd=config.YARDSTICK_REPOS_DIR)
+        return p.communicate()[0]
 
     def _pof(self, condition):
         """Pass or FAIL helper"""
 
-        return "PASS" if condition else "FAIL"
+        return 1 if condition else 0
 
     def teardown(self):
         """teardown the benchmark"""
