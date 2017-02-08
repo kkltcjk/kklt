@@ -60,7 +60,7 @@ prepare_aggregate()
     # true. This denotes that all instances created using this flavor will be sent
     # to hosts in host aggregates with pinned=true in their aggregate metadata:
 
-    openstack flavor create --id 101 --ram 512 --disk 3 --vcpus 4 yardstick-pinned-flavor
+    openstack flavor create --id 101 --ram 512 --disk 3 --vcpus 3 yardstick-pinned-flavor
 
     # nova flavor-key yardstick-pinned-flavor set hw:cpu_policy=dedicated
     openstack flavor set --property hw:cpu_policy=dedicated yardstick-pinned-flavor
