@@ -37,7 +37,7 @@ prepare_aggregate()
     # Hosts that are not intended to be targets for pinned instances should be
     # added to the "regular" host aggregate
 
-    compute_nodes=($(openstack availability zone list --long | grep nova-compute | awk '{print $7}'))
+    compute_nodes=($(openstack availability zone list --long | grep nova-compute | sort | awk '{print $7}'))
 
     nova aggregate-add-host pinned-cpu ${compute_nodes[0]}
     # openstack aggregate add host pinned-cpu ${compute_nodes[0]}
