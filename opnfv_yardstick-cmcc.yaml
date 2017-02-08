@@ -18,3 +18,5 @@ test_cases:
     file_name: attach_nic.yaml
 -
     file_name: vlan_vxlan.yaml
+-
+    file_name: heataction-tc.yaml
