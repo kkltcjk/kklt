@@ -1,0 +1,18 @@
+---
+# Yardstick CMCC task suite
+
+schema: "yardstick:suite:0.1"
+
+name: "opnfv_yardstick-cmcc"
+test_cases_dir: "samples/"
+test_cases:
+-
+    file_name: cpu_pinning.yaml
+-
+    file_name: numa_pinning.yaml
+    task_args:
+        cpu_set: "2,4,5,8"
+-
+    file_name: attach_nic.yaml
+-
+    file_name: vlan_vxlan.yaml
