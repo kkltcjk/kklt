@@ -1,51 +1,98 @@
 ---
 
 schema: "yardstick:task:0.1"
-{% set image = image or "cirros-0.3.3" %}
-{% set run_step = run_step or 'setup,run,teardown' %}
+{% set image = image or "yardstick-image" %}
 scenarios:
 -
   type: Migrate
 
-  options:
-    cpu_set: 0,2,4,6
-    host_memory: 512
-    host: node1,node2,node3,node4,node5
-
-  host: host.migrate
-  target: target.migrate
+  host: jack.migrate
+  targets:
+  - rose.migrate
+  - kobe.migrate-pin
 
   runner:
     type: Iteration
     iteration: 1
-    run_step: {{run_step}}
-    pre-start-action:
-        command: "bash ./yardstick/benchmark/scenarios/compute/before_resize.sh"
-    post-stop-action:
-        command: "bash ./yardstick/benchmark/scenarios/compute/after_resize.sh"
 
-  flavor: yardstick-flavor
-  image: {{image}}
-  network: ext-net
+contexts:
+-
+  type: Node
+  name: LF
+  file: etc/yardstick/nodes/compass_sclab_virtual/pod.yaml
 
-  node_file: etc/yardstick/nodes/compass_sclab_virtual/pod.yaml
+  env:
+    prefix: yardstick.benchmark.scenarios.compute
+    setup:
+    -
+      local:
+          script: yardstick/benchmark/scenarios/compute/migrate_local_setup.bash
+    -
+      node1:
+          script: migrate_controller_setup.bash
+    -
+      node2:
+          script: migrate_controller_setup.bash
+    -
+      node3:
+          script: migrate_controller_setup.bash
+    -
+      node4:
+          script: migrate_compute_server_setup.bash
+          options: 0,2,4,6 512
+    -
+      node5:
+          script: migrate_compute_client_setup.bash
+          options: 0,2,4,6 512
 
-context:
+    teardown:
+    -
+      node1:
+          script: migrate_controller_teardown.bash
+    -
+      node2:
+          script: migrate_controller_teardown.bash
+    -
+      node3:
+          script: migrate_controller_teardown.bash
+    -
+      node5:
+          script: migrate_compute_client_teardown.bash
+    -
+      node4:
+          script: migrate_compute_server_teardown.bash
+    -
+      local:
+          script: yardstick/benchmark/scenarios/compute/migrate_local_teardown.bash
+-
   name: migrate
   image: {{image}}
   flavor: yardstick-flavor
-  user: cirros
+  user: ubuntu
 
   placement_groups:
     pgrp1:
       policy: "availability"
 
   servers:
-    host:
+    jack:
       floating_ip: true
       placement: "pgrp1"
-    target:
+    rose:
       placement: "pgrp1"
+      floating_ip: true
+
+  networks:
+    test:
+      cidr: '10.0.1.0/24'
+-
+  name: migrate-pin
+  image: {{image}}
+  flavor: yardstick-pinned-flavor-1
+  user: ubuntu
+
+  servers:
+    kobe:
       floating_ip: true
 
   networks:

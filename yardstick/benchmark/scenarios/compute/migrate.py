@@ -11,16 +11,14 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import logging
-import os
 import subprocess
+import threading
+import time
 
-import yaml
 import pkg_resources
 
 from yardstick import ssh
 from yardstick.common import openstack_utils
-from yardstick.common import constants as consts
-from yardstick.common.task_template import TaskTemplate
 from yardstick.benchmark.scenarios import base
 
 LOG = logging.getLogger(__name__)
@@ -34,20 +32,13 @@ class Migrate(base.Scenario):
 
     __scenario_type__ = "Migrate"
 
-    CONTROLLER_SETUP = 'migrate_controller_setup.bash'
-    CONTROLLER_TEARDOWN = 'migrate_controller_teardown.bash'
-    COMPUTE_SERVER_SETUP = 'migrate_compute_server_setup.bash'
-    COMPUTE_SERVER_TEARDOWN = 'migrate_compute_server_teardown.bash'
-    COMPUTE_CLIENT_SETUP = 'migrate_compute_client_setup.bash'
-    COMPUTE_CLIENT_TEARDOWN = 'migrate_compute_client_teardown.bash'
+    PING = 'migrate_ping.bash'
 
     PRE_PATH = "yardstick.benchmark.scenarios.compute"
 
     def __init__(self, scenario_cfg, context_cfg):
         self.scenario_cfg = scenario_cfg
         self.context_cfg = context_cfg
-        print(self.scenario_cfg)
-        print(self.context_cfg)
 
         host = self.context_cfg['host']
         self.user = host.get('user', 'ubuntu')
@@ -56,53 +47,7 @@ class Migrate(base.Scenario):
         self.key_filename = host.get('key_filename', '/root/.ssh/id_rsa')
         self.password = host.get('password')
 
-        options = scenario_cfg['options']
-        self.host_list = options.get('host').split(',')
-        self.cpu_set = options.get("cpu_set", '1,2,3,4,5,6')
-        self.host_memory = options.get("host_memory", 512)
-
-        print(self.host_list)
-
         self.nova_client = openstack_utils.get_nova_client()
-        self.neutron_client = openstack_utils.get_neutron_client()
-        self.glance_client = openstack_utils.get_glance_client()
-
-        node_file = os.path.join(consts.YARDSTICK_ROOT_PATH,
-                                 scenario_cfg.get('node_file'))
-        with open(node_file) as f:
-            nodes = yaml.safe_load(TaskTemplate.render(f.read()))
-        self.nodes = {a['name']: a for a in nodes['nodes']}
-        print(self.nodes)
-
-    def _get_hosts(self, hosts, type):
-        # get node for given node type
-        nodes = [a for a in hosts if self.nodes.get(a, {}).get('role') == type]
-
-        if not nodes:
-            LOG.error("Can't find %s node in the context!!!", type)
-
-        return nodes
-
-    def _get_host_client(self, node_name):
-        # ssh host
-        node = self.nodes.get(node_name, None)
-        user = str(node.get('user', 'ubuntu'))
-        ssh_port = str(node.get("ssh_port", ssh.DEFAULT_PORT))
-        ip = str(node.get('ip', None))
-        pwd = str(node.get('password', None))
-        key_fname = node.get('key_filename', '/root/.ssh/id_rsa')
-
-        if pwd is not None:
-            LOG.debug("Log in via pw, user:%s, host:%s, password:%s",
-                      user, ip, pwd)
-            self.host_client = ssh.SSH(user, ip, password=pwd, port=ssh_port)
-        else:
-            LOG.debug("Log in via key, user:%s, host:%s, key_filename:%s",
-                      user, ip, key_fname)
-            self.host_client = ssh.SSH(user, ip, key_filename=key_fname,
-                                       port=ssh_port)
-
-        self.host_client.wait(timeout=600)
 
     def _get_instance_client(self):
 
@@ -121,66 +66,101 @@ class Migrate(base.Scenario):
 
         self.instance_client.wait(timeout=600)
 
-    def _execute_script(self, node, script, options=''):
-        script_file = pkg_resources.resource_filename(Migrate.PRE_PATH, script)
+    def _do_ping_task(self):
+        destination = self.context_cfg['target'].get('ip')
 
-        self._get_host_client(node)
-        self.host_client._put_file_shell(script_file, '~/{}'.format(script))
+        self._get_instance_client()
+        ping_script = pkg_resources.resource_filename(Migrate.PRE_PATH,
+                                                      Migrate.PING)
+        self.instance_client._put_file_shell(ping_script,
+                                             '~/{}'.format(Migrate.PING))
+        cmd = 'sudo bash {} {}'.format(Migrate.PING, destination)
 
-        cmd = 'sudo bash {}{}'.format(script, options)
-        status, stdout, stderr = self.host_client.execute(cmd)
-        if status:
-            raise RuntimeError(stderr)
+        ping_thread = PingThread(self.instance_client.execute, cmd)
+        ping_thread.start()
+        return ping_thread
 
-    def mysetup(self):
-        controller_nodes = self._get_hosts(self.host_list, 'Controller')
-        LOG.debug("The Controller Node is: %s", controller_nodes)
-        for node in controller_nodes:
-            self._execute_script(node, Migrate.CONTROLLER_SETUP)
+    def _get_current_host_name(self, server_id):
 
-        compute_nodes = self._get_hosts(self.host_list, 'Compute')
-        LOG.debug("The Compute Node is: %s", compute_nodes)
+        key = 'OS-EXT-SRV-ATTR:host'
+        cmd = "openstack server show %s | grep %s | awk '{print $4}'" % (
+            server_id, key)
 
-        options = ' {} {}'.format(self.cpu_set, self.host_memory)
-        self._execute_script(compute_nodes[0], Migrate.COMPUTE_SERVER_SETUP,
-                             options)
+        LOG.debug('Executing cmd: %s', cmd)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+        current_host = p.communicate()[0]
 
-        for node in compute_nodes[1:]:
-            self._execute_script(node, Migrate.COMPUTE_CLIENT_SETUP, options)
+        LOG.debug('Host: %s', current_host)
+
+        return current_host
 
     def run(self, result):
-        self.mysetup()
+        ping_thread = self._do_ping_task()
 
-        vm3_server_name = '{}-3'.format(self.scenario_cfg['host'])
-        flavor = self.scenario_cfg.get('flavor')
-        image = self.scenario_cfg.get('image')
-        net = self.scenario_cfg.get('network')
+        targets = self.scenario_cfg.get('targets')
+        target = targets[0]
+        server = openstack_utils.get_server_by_name(target)
 
-        network_id = openstack_utils.get_network_id(self.neutron_client, net)
-        image_id = openstack_utils.get_image_id(self.glance_client, image)
+        current_host = self._get_current_host_name(server.id)
 
-        self.instance = openstack_utils.create_instance_and_wait_for_active(
-            flavor, image_id, network_id, instance_name=vm3_server_name)
+        host = self._get_migrate_host(current_host)
+        LOG.debug('To be migrated: %s', host)
 
-        print(vars(self.instance))
-
-        host = 'host5'
-        cmd = ['nova', 'live-migration', self.instance.id, host]
+        cmd = ['nova', 'live-migration', server.id, host]
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        print(p.communicate()[0])
+        LOG.debug('Migrated: %s', p.communicate()[0])
 
-        self.myteardown()
+        time.sleep(10)
+        current_host = self._get_current_host_name(server.id)
 
-    def myteardown(self):
-        controller_nodes = self._get_hosts(self.host_list, 'Controller')
-        LOG.debug("The Controller Node is: %s", controller_nodes)
-        for node in controller_nodes:
-            self._execute_script(node, Migrate.CONTROLLER_TEARDOWN)
+        ping_thread.join()
 
-        compute_nodes = self._get_hosts(self.host_list, 'Compute')
-        LOG.debug("The Compute Node is: %s", compute_nodes)
+        result = self._compute_interrupt_time(ping_thread.get_result())
+        LOG.debug('The interrupt time is %s ms', result)
 
-        for node in compute_nodes[1:]:
-            self._execute_script(node, Migrate.COMPUTE_CLIENT_TEARDOWN)
+        LOG.debug('First Job Done')
 
-        self._execute_script(compute_nodes[0], Migrate.COMPUTE_SERVER_TEARDOWN)
+        vm2 = targets[1]
+        server = openstack_utils.get_server_by_name(vm2)
+
+        current_host = self._get_current_host_name(server.id)
+
+        host = self._get_migrate_host(current_host)
+        LOG.debug('To be migrated: %s', host)
+
+        cmd = ['nova', 'live-migration', server.id, host]
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        LOG.debug('Migrated: %s', p.communicate()[0])
+
+        time.sleep(10)
+        current_host = self._get_current_host_name(server.id)
+
+        LOG.debug('Second Job Done')
+
+    def _get_migrate_host(self, current_host):
+        hosts = self.nova_client.hosts.list_all()
+        compute_hosts = [a.host for a in hosts if a.service == 'compute']
+        for host in compute_hosts:
+            if host.strip() != current_host.strip():
+                return host
+
+    def _compute_interrupt_time(self, data):
+        times = data[1][:-2].split('.')
+        start = int(times[1])
+        end = int(times[0])
+        return (end - start) / 1000000
+
+
+class PingThread(threading.Thread):
+
+    def __init__(self, method, args):
+        super(PingThread, self).__init__()
+        self.method = method
+        self.args = args
+        self.result = None
+
+    def run(self):
+        self.result = self.method(self.args)
+
+    def get_result(self):
+        return self.result
