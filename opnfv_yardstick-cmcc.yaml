@@ -17,6 +17,10 @@ test_cases:
         "external_network": "ext-net",
         "file": "etc/yardstick/nodes/compass_sclab_physical/pod.yaml"}'
 -
+    file_name: migrate.yaml
+    task_args:
+        unknown: '{"file": "etc/yardstick/nodes/compass_sclab_physical/pod.yaml"}'
+-
     file_name: resize.yaml
     task_args: 
         unknown: '{"file": "etc/yardstick/nodes/compass_sclab_physical/pod.yaml"}'
@@ -30,3 +34,6 @@ test_cases:
     file_name: heataction-tc.yaml
 -
     file_name: hugepages.yaml
+    task_args:
+        unknown: '{"external_network": "ext-net",
+        "file": "etc/yardstick/nodes/compass_sclab_physical/pod.yaml"}'
