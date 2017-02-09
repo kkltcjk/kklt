@@ -10,7 +10,6 @@
 
 set -e
 
-sed -i '/allow_resize_to_same_host/d' /etc/nova/nova.conf
 sed -i '/scheduler_default_filters/d' /etc/nova/nova.conf
 
 if which systemctl 2>/dev/null; then
