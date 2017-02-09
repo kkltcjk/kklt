@@ -276,7 +276,20 @@
             {
               "alias": "Test status (1 means passed, 0 means failed)",
               "dsType": "influxdb",
-              "groupBy": [],
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
               "measurement": "numa_pinning",
               "policy": "default",
               "refId": "B",
@@ -288,6 +301,10 @@
                       "Test"
                     ],
                     "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
                   }
                 ]
               ],
@@ -426,7 +443,7 @@
                 [
                   {
                     "params": [
-                      "value"
+                      "status"
                     ],
                     "type": "field"
                   },
@@ -436,7 +453,45 @@
                   }
                 ]
               ],
-              "tags": []
+              "tags": [],
+              "measurement": "migrate"
+            },
+            {
+              "policy": "default",
+              "dsType": "influxdb",
+              "resultFormat": "time_series",
+              "tags": [],
+              "groupBy": [
+                {
+                  "type": "time",
+                  "params": [
+                    "$interval"
+                  ]
+                },
+                {
+                  "type": "fill",
+                  "params": [
+                    "null"
+                  ]
+                }
+              ],
+              "select": [
+                [
+                  {
+                    "type": "field",
+                    "params": [
+                      "interrupt_time"
+                    ]
+                  },
+                  {
+                    "type": "mean",
+                    "params": []
+                  }
+                ]
+              ],
+              "refId": "B",
+              "measurement": "migrate",
+              "alias": "Interrupt time (ms)"
             }
           ],
           "timeFrom": "1d",
@@ -462,8 +517,8 @@
               "show": true
             },
             {
-              "format": "short",
-              "label": "",
+              "format": "dtdurationms",
+              "label": "Interrupt time",
               "logBase": 1,
               "max": null,
               "min": null,
@@ -784,6 +839,7 @@
                   "type": "fill"
                 }
               ],
+              "measurement": "affinity-tc",
               "policy": "default",
               "refId": "A",
               "resultFormat": "time_series",
@@ -801,8 +857,7 @@
                   }
                 ]
               ],
-              "tags": [],
-              "measurement": "affinity-tc"
+              "tags": []
             }
           ],
           "timeFrom": "1d",
@@ -1261,6 +1316,7 @@
                   "type": "fill"
                 }
               ],
+              "measurement": "affinity-tc",
               "policy": "default",
               "refId": "A",
               "resultFormat": "time_series",
@@ -1278,8 +1334,7 @@
                   }
                 ]
               ],
-              "tags": [],
-              "measurement": "affinity-tc"
+              "tags": []
             }
           ],
           "timeFrom": "1d",
@@ -1475,7 +1530,7 @@
   },
   "refresh": false,
   "schemaVersion": 12,
-  "version": 79,
+  "version": 81,
   "links": [],
   "gnetId": null
 }
