@@ -62,7 +62,7 @@ prepare_aggregate()
     # true. This denotes that all instances created using this flavor will be sent
     # to hosts in host aggregates with pinned=true in their aggregate metadata:
 
-    openstack flavor create --id 101 --ram 512 --disk 3 --vcpus 3 migrate-flavor
+    openstack flavor create --ram 512 --disk 3 --vcpus 3 migrate-flavor
 
     # nova flavor-key migrate-flavor set hw:cpu_policy=dedicated
     openstack flavor set --property hw:cpu_policy=dedicated migrate-flavor
