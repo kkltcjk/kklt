@@ -825,35 +825,18 @@
             {
               "alias": "Test status (1 means passed, 0 means failed)",
               "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "params": [
-                    "$interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "measurement": "affinity-tc",
+              "groupBy": [],
+              "measurement": "hugepages",
               "policy": "default",
               "refId": "A",
               "resultFormat": "time_series",
               "select": [
                 [
                   {
+                    "type": "field",
                     "params": [
                       "test"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
+                    ]
                   }
                 ]
               ],
@@ -1446,10 +1429,10 @@
               "select": [
                 [
                   {
+                    "type": "field",
                     "params": [
                       "test"
-                    ],
-                    "type": "field"
+                    ]
                   }
                 ]
               ],
@@ -1530,7 +1513,7 @@
   },
   "refresh": false,
   "schemaVersion": 12,
-  "version": 81,
+  "version": 83,
   "links": [],
   "gnetId": null
 }
