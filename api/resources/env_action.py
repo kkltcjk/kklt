@@ -200,14 +200,14 @@ def _prepare_env_daemon(task_id):
 
         _create_directories()
 
+        rc_file = config.OPENSTACK_RC_FILE
         if (os.getenv('OS_AUTH_URL') is None and
             os.getenv('EXTERNAL_NETWORK') is None):
-            rc_file = config.OPENSTACK_RC_FILE
             _get_remote_rc_file(rc_file, installer_ip, installer_type)
             _source_file(rc_file)
             _append_external_network(rc_file)
             # update the external_network
-            _source_file(rc_file)
+        _source_file(rc_file)
 
         _clean_images()
 
