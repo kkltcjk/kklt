@@ -2,11 +2,15 @@
 
 schema: "yardstick:task:0.1"
 {% set image = image or "yardstick-image" %}
+{% set file = file or "etc/yardstick/nodes/compass_sclab_physical/pod.yaml" %}
 scenarios:
 -
   type: Migrate
 
   host: jack.migrate
+  options:
+    host: node1,node2,node3,node4,node5
+    cpu_set: 0,2,4,6,8,10,12,14,16
   targets:
   - rose.migrate
   - kobe.migrate-pin
@@ -15,11 +19,13 @@ scenarios:
     type: Iteration
     iteration: 1
 
+  node_file: {{ file }}
+
 contexts:
 -
   type: Node
   name: LF
-  file: etc/yardstick/nodes/compass_sclab_virtual/pod.yaml
+  file: {{ file }}
 
   env:
     prefix: yardstick.benchmark.scenarios.compute
@@ -39,11 +45,11 @@ contexts:
     -
       node4:
           script: migrate_compute_server_setup.bash
-          options: 0,2,4,6 512
+          options: 0,2,4,6,8,10,12,14,16 512
     -
       node5:
           script: migrate_compute_client_setup.bash
-          options: 0,2,4,6 512
+          options: 0,2,4,6,8,10,12,14,16 512
 
     teardown:
     -
@@ -88,7 +94,7 @@ contexts:
 -
   name: migrate-pin
   image: {{image}}
-  flavor: yardstick-pinned-flavor-1
+  flavor: migrate-flavor
   user: ubuntu
 
   servers:
