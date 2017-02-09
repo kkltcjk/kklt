@@ -29,9 +29,9 @@ scenarios:
     iterations: 1
     run_step: {{run_step}}
     pre-start-action:
-        command: "bash ./yardstick/benchmark/scenarios/compute/prepare_numa_pinning.sh > /dev/null"
+        command: "bash ./yardstick/benchmark/scenarios/compute/prepare_numa_pinning.bash > /dev/null"
     post-stop-action:
-        command: "bash ./yardstick/benchmark/scenarios/compute/reset_pinning.sh > /dev/null"
+        command: "bash ./yardstick/benchmark/scenarios/compute/reset_pinning.bash > /dev/null"
 
 context:
   type: Node
