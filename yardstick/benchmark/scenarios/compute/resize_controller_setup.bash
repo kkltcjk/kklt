@@ -1,11 +1,19 @@
-nova_config_path=/etc/nova/nova.conf
-cp -p "${nova_config_path}" /tmp/nova.conf
-sed -i '/live_migration_flag/d' "${nova_config_path}"
-sed -i '/DEFAULT/a live_migration_flag=VIR_MIGRATE_UNDEFINE_SOURCE,VIR_MIGRATE_PEER2PEER,VIR_MIGRATE_LIVE,VIR_MIGRATE_TUNNELLED' "${nova_config_path}"
-sed -i '/vncserver_listen/d' "${nova_config_path}"
-sed -i '/DEFAULT/a vncserver_listen=0.0.0.0' "${nova_config_path}"
-sed -i '/scheduler_default_filters/d' "${nova_config_path}"
-sed -i '/DEFAULT/a scheduler_default_filters=NUMATopologyFilter,AggregateInstanceExtraSpecsFilter' "${nova_config_path}"
+#!/bin/bash
+##############################################################################
+# Copyright (c) 2017 Huawei Technologies Co.,Ltd and others.
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Apache License, Version 2.0
+# which accompanies this distribution, and is available at
+# http://www.apache.org/licenses/LICENSE-2.0
+##############################################################################
+
+set -e
+
+sed -i '/allow_resize_to_same_host/d' /etc/nova/nova.conf
+sed -i '/DEFAULT/a allow_resize_to_same_host=True' /etc/nova/nova.conf
+sed -i '/scheduler_default_filters/d' /etc/nova/nova.conf
+sed -i '/DEFAULT/a scheduler_default_filters=NUMATopologyFilter,AggregateInstanceExtraSpecsFilter' /etc/nova/nova.conf
 
 if which systemctl 2>/dev/null; then
   if [ $(systemctl is-active nova-scheduler.service) == "active" ]; then

@@ -19,13 +19,13 @@ scenarios:
     iteration: 1
     run_step: {{run_step}}
     pre-start-action:
-        command: "bash ./yardstick/benchmark/scenarios/compute/before_resize.sh"
+        command: "bash ./yardstick/benchmark/scenarios/compute/resize_local_setup.bash"
     post-stop-action:
-        command: "bash ./yardstick/benchmark/scenarios/compute/after_resize.sh"
+        command: "bash ./yardstick/benchmark/scenarios/compute/resize_local_teardown.bash"
 
   node_file: etc/yardstick/nodes/compass_sclab_physical/pod.yaml
-  vm2_origin_flavor: yardstick-pinned-flavor-1
-  vm2_new_flavor: yardstick-pinned-flavor-2
+  vm2_origin_flavor: resize-flavor-1
+  vm2_new_flavor: resize-flavor-2
   vm2_image: {{ image }}
 
   vm1_new_flavor: m1.small

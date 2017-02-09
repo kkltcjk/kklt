@@ -10,10 +10,9 @@
 
 reset_aggregate()
 {
-    # Delete the "yardstick-pinned-flavor" flavor
+    # Delete the "migrate-flavor" flavor
 
-    openstack flavor delete yardstick-pinned-flavor-1
-    openstack flavor delete yardstick-pinned-flavor-2
+    openstack flavor delete migrate-flavor
 
     # Unset the "aggregate_instance_extra_specs:pinned" property on all existing flavors
 
@@ -24,11 +23,13 @@ reset_aggregate()
 
     # remove hosts from corresponding Nova aggregates
 
-    nova aggregate-remove-host pinned-cpu host4
-    # openstack aggregate remove host pinned-cpu host4
+    compute_nodes=($(openstack availability zone list --long | grep nova-compute | sort | awk '{print $7}'))
 
-    nova aggregate-remove-host regular host5
-    # openstack aggregate remove host regular host5
+    nova aggregate-remove-host pinned-cpu ${compute_nodes[0]}
+    # openstack aggregate remove host pinned-cpu ${compute_nodes[0]}
+
+    nova aggregate-remove-host regular ${compute_nodes[1]}
+    # openstack aggregate remove host regular ${compute_nodes[1]}
 
     # Delete created Nova aggregates
 

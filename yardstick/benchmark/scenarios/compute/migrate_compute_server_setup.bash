@@ -44,4 +44,20 @@ sed -i '/DEFAULT/a reserved_host_memory_mb='''${HOST_MEMORY}'''' "${nova_config_
 sed -i '/vcpu_pin_set/d' "${nova_config_path}"
 sed -i '/DEFAULT/a vcpu_pin_set='''${CPU_SET}'''' "${nova_config_path}"
 
-service nova-compute restart
+if which systemctl 2>/dev/null; then
+  if [ $(systemctl is-active nova-compute.service) == "active" ]; then
+      echo "restarting nova-compute.service"
+      systemctl restart nova-compute.service
+  elif [ $(systemctl is-active openstack-nova-compute.service) == "active" ]; then
+      echo "restarting openstack-nova-compute.service"
+      systemctl restart openstack-nova-compute.service
+  fi
+else
+  if [[ $(service nova-compute status | grep running) ]]; then
+    echo "restarting nova-compute.service"
+    service nova-compute restart
+  elif [[ $(service openstack-nova-compute status | grep running) ]]; then
+    echo "restarting openstack-nova-compute.service"
+    service openstack-nova-compute restart
+  fi
+fi

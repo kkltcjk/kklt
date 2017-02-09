@@ -35,10 +35,10 @@ class Resize(base.Scenario):
 
     __scenario_type__ = "Resize"
 
-    CONTROLLER_SETUP_SCRIPT = "controller_setup.bash"
-    COMPUTE_SETUP_SCRIPT = "compute_setup.bash"
-    CONTROLLER_RESET_SCRIPT = "controller_reset.bash"
-    COMPUTE_RESET_SCRIPT = "compute_reset.bash"
+    CONTROLLER_SETUP_SCRIPT = "resize_controller_setup.bash"
+    COMPUTE_SETUP_SCRIPT = "resize_compute_setup.bash"
+    CONTROLLER_RESET_SCRIPT = "resize_controller_teardown.bash"
+    COMPUTE_RESET_SCRIPT = "resize_compute_teardown.bash"
 
     def __init__(self, scenario_cfg, context_cfg):
         self.scenario_cfg = scenario_cfg

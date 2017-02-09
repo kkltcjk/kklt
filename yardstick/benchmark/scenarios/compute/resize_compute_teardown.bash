@@ -1,14 +1,19 @@
-mv /tmp/fstab /etc/fstab
-umount host4:/
+#!/bin/bash
+##############################################################################
+# Copyright (c) 2017 Huawei Technologies Co.,Ltd and others.
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Apache License, Version 2.0
+# which accompanies this distribution, and is available at
+# http://www.apache.org/licenses/LICENSE-2.0
+##############################################################################
 
-mv /tmp/libvirtd.conf /etc/libvirt/libvirtd.conf
-mv /tmp/libvirt-bin.conf /etc/init/libvirt-bin.conf
-mv /tmp/libvirt-bin /etc/default/libvirt-bin
+set -e
 
-stop libvirt-bin && start libvirt-bin
+sudo sed -i '/allow_resize_to_same_host/d' /etc/nova/nova.conf
+sudo sed -i '/vcpu_pin_set/d' /etc/nova/nova.conf
+sudo sed -i '/reserved_host_memory_mb/d' /etc/nova/nova.conf
 
-
-mv /tmp/nova.conf /etc/nova/nova.conf
 if which systemctl 2>/dev/null; then
   if [ $(systemctl is-active nova-compute.service) == "active" ]; then
       echo "restarting nova-compute.service"
