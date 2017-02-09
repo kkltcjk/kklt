@@ -10,7 +10,6 @@
 
 set -e
 
-sudo sed -i '/allow_resize_to_same_host/d' /etc/nova/nova.conf
 sudo sed -i '/vcpu_pin_set/d' /etc/nova/nova.conf
 sudo sed -i '/reserved_host_memory_mb/d' /etc/nova/nova.conf
 

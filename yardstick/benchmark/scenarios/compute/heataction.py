@@ -70,7 +70,7 @@ class Heataction(base.Scenario):
         vm1_image = self._fetch_diff('heataction-vm1')
         vm2_image = self._fetch_diff('heataction-vm2')
         LOG.debug("vm1 image name: %s, vm2 image name: %s",
-                      vm1_image, vm2_image)
+                  vm1_image, vm2_image)
         result.update({'test': self._pof(vm1_image != vm2_image)})
 
     def _fetch_diff(self, name):

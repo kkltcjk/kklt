@@ -5,6 +5,7 @@
 
 schema: "yardstick:task:0.1"
 {% set run_step = run_step or 'setup,run,teardown' %}
+{% set file = file or 'etc/yardstick/nodes/compass_sclab_physical/pod.yaml' %}
 
 scenarios:
 -
@@ -29,11 +30,11 @@ scenarios:
     iterations: 1
     run_step: {{run_step}}
     pre-start-action:
-        command: "bash ./yardstick/benchmark/scenarios/compute/prepare_cpu_pinning.sh > /dev/null"
+        command: "bash ./yardstick/benchmark/scenarios/compute/prepare_cpu_pinning.bash > /dev/null"
     post-stop-action:
-        command: "bash ./yardstick/benchmark/scenarios/compute/reset_pinning.sh > /dev/null"
+        command: "bash ./yardstick/benchmark/scenarios/compute/reset_pinning.bash > /dev/null"
 
 context:
   type: Node
   name: demo
-  file: etc/yardstick/nodes/compass_sclab_physical/pod.yaml
+  file: {{file}}
