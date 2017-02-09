@@ -11,8 +11,9 @@
 openstack flavor delete yardstick-hugepages-flavor1
 openstack flavor delete yardstick-hugepages-flavor2
 
-nova aggregate-remove-host compute_node_1 overcloud-novacompute-0.opnfvlf.org
-nova aggregate-remove-host compute_node_2 overcloud-novacompute-1.opnfvlf.org
+compute_nodes=($(openstack availability zone list --long | grep nova-compute | awk '{print $7}' | sort))
+openstack aggregate remove host compute_node_1 ${compute_nodes[0]}
+openstack aggregate remove host compute_node_2 ${compute_nodes[1]}
 
 openstack aggregate delete compute_node_1
 openstack aggregate delete compute_node_2

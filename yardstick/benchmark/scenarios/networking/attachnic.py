@@ -98,7 +98,10 @@ class AttachNic(base.Scenario):
                     stdin=stdin_file)
 
             if exit_status != 0:
+                result.update({"Test": 0})
                 raise RuntimeError(stderr)
+            else:
+                result.update({"Test": 1})
 
             if stdout:
                 target_vm_name = target_vm.split('.')[0]

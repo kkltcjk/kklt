@@ -133,10 +133,10 @@ class Resize(base.Scenario):
             self._ssh_host(controller_node)
             # copy script to host
             self.client._put_file_shell(
-                self.controller_setup_script, '~/controller_setup.sh')
+                self.controller_setup_script, '~/controller_setup.bash')
             # setup controller node
             status, stdout, stderr = self.client.execute(
-                "sudo bash controller_setup.sh")
+                "sudo bash controller_setup.bash")
             if status:
                 raise RuntimeError(stderr)
 
@@ -147,35 +147,36 @@ class Resize(base.Scenario):
             self._ssh_host(compute_node)
             # copy script to host
             self.client._put_file_shell(
-                self.compute_setup_script, '~/compute_setup.sh')
+                self.compute_setup_script, '~/compute_setup.bash')
             # setup compute node
             status, stdout, stderr = self.client.execute(
-                "sudo bash compute_setup.sh %s %d" % (self.cpu_set,
-                                                      self.host_memory))
+                "sudo bash compute_setup.bash %s %d" % (self.cpu_set,
+                                                        self.host_memory))
             if status:
                 raise RuntimeError(stderr)
 
-    def _write_remote_file(self):
+    def _write_remote_file(self, word):
         self._get_ssh_client()
-        cmd = "echo 'Hello World!' > resize.data"
+        cmd = "echo {} > resize.data".format(word)
         self.connection.execute(cmd)
 
-    def _check_file_content(self):
+    def _check_file_content(self, word):
         self._get_ssh_client()
         cmd = 'cat resize.data'
         status, stdout, stderr = self.connection.execute(cmd)
-        print(stdout.strip())
+        return word == stdout.strip()
 
     def run(self, result):
 
-        self._write_remote_file()
+        word = 'Hello world!'
+        self._write_remote_file(word)
 
         server_name = self.scenario_cfg['host']
         new_flavor_name = self.scenario_cfg['vm1_new_flavor']
-        duration = self._do_resize(server_name, new_flavor_name)
-        print('The duration is {}'.format(duration))
+        duration1 = self._do_resize(server_name, new_flavor_name)
+        print('The duration is {}'.format(duration1))
 
-        self._check_file_content()
+        status1 = self._check_file_content(word)
 
         self.mysetup()
         vm2_server_name = '{}-2'.format(server_name)
@@ -192,20 +193,51 @@ class Resize(base.Scenario):
             vm2_origin_flavor_name, image_id, network_id,
             instance_name=vm2_server_name)
 
-        data = self._check_numa_node(self.instance.id)
-        print(data)
+        data1 = self._check_numa_node(self.instance.id)
+        print(data1)
 
-        duration = self._do_resize(vm2_server_name, vm2_new_flavor_name)
+        duration2 = self._do_resize(vm2_server_name, vm2_new_flavor_name)
 
-        data = self._check_numa_node(self.instance.id)
-        print(data)
+        data2 = self._check_numa_node(self.instance.id)
+        print(data2)
 
-        print('The duration is {}'.format(duration))
+        status2 = self._check_vm2_status(data1, data2)
+        status = 1 if status1 and status2 else 0
+
+        print('The duration is {}'.format(duration2))
+
+        test_result = {
+            'status': status,
+            'duration1': duration1,
+            'duration2': duration2
+        }
+        print(test_result)
+        result.update(test_result)
+        openstack_utils.delete_instance(self.nova_client, self.instance.id)
         self.myteardown()
+
+    def _check_vm2_status(self, info1, info2):
+        nodepin_ok = True
+        for i in info1['pinning']:
+            ok = 0
+            for j in info2['pinning']:
+                if i['nodeset'] == j['nodeset']:
+                    ok = 1
+                    break
+            if ok == 0:
+                nodepin_ok = False
+                break
+
+        vcpupin_ok = True
+        for i in info2['vcpupin']:
+            if i['cpuset'] not in self.cpu_set.split(','):
+                vcpupin_ok = False
+                break
+
+        return nodepin_ok and vcpupin_ok
 
     def _check_numa_node(self, server_id):
         for compute_node in self.compute_node_name:
-            print(compute_node)
             self._ssh_host(compute_node)
 
         cmd = "virsh dumpxml %s" % server_id
@@ -213,11 +245,10 @@ class Resize(base.Scenario):
         status, stdout, stderr = self.client.execute(cmd)
         if status:
             raise RuntimeError(stderr)
-        pinning = []
         root = ET.fromstring(stdout)
-        for memnode in root.iter('memnode'):
-            pinning.append(memnode.attrib)
-        return {"pinning": pinning}
+        vcpupin = [a.attrib for a in root.iter('vcpupin')]
+        pinning = [a.attrib for a in root.iter('memnode')]
+        return {"pinning": pinning, 'vcpupin': vcpupin}
 
     def _do_resize(self, server_name, new_flavor_name):
         nova_client = openstack_utils.get_nova_client()
@@ -250,10 +281,10 @@ class Resize(base.Scenario):
             self._ssh_host(compute_node)
             # copy script to host
             self.client._put_file_shell(
-                self.compute_reset_script, '~/compute_reset.sh')
+                self.compute_reset_script, '~/compute_reset.bash')
             # reset compute node
             status, stdout, stderr = self.client.execute(
-                "sudo bash compute_reset.sh")
+                "sudo bash compute_reset.bash")
             if status:
                 raise RuntimeError(stderr)
 
@@ -262,9 +293,9 @@ class Resize(base.Scenario):
             self._ssh_host(controller_node)
             # copy script to host
             self.client._put_file_shell(
-                self.controller_reset_script, '~/controller_reset.sh')
+                self.controller_reset_script, '~/controller_reset.bash')
             # reset controller node
             status, stdout, stderr = self.client.execute(
-                "sudo bash controller_reset.sh")
+                "sudo bash controller_reset.bash")
             if status:
                 raise RuntimeError(stderr)

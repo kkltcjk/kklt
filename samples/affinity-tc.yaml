@@ -8,9 +8,8 @@ scenarios:
 -
   type: Affinity
   runner:
-    type: Duration
-    duration: 120
-    interval: 1
+    type: Iteration
+    iterations: 1
 
 context:
 #-
