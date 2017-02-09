@@ -2,7 +2,7 @@
 
 schema: "yardstick:task:0.1"
 {% set image = image or "cirros-0.3.3" %}
-{% set run_step = run_step or 'setup,run,teardown' %}
+{% set file = file or "etc/yardstick/nodes/compass_sclab_physical/pod.yaml" %}
 scenarios:
 -
   type: Resize
@@ -12,32 +12,82 @@ scenarios:
     host_memory: 512
     host: node1,node2,node3,node4
 
-  host: node1.resize
+  host: kobe.resize
+  target: bryant.resize-pin
 
   runner:
     type: Iteration
     iteration: 1
-    run_step: {{run_step}}
-    pre-start-action:
-        command: "bash ./yardstick/benchmark/scenarios/compute/resize_local_setup.bash"
-    post-stop-action:
-        command: "bash ./yardstick/benchmark/scenarios/compute/resize_local_teardown.bash"
 
-  node_file: etc/yardstick/nodes/compass_sclab_physical/pod.yaml
-  vm2_origin_flavor: resize-flavor-1
-  vm2_new_flavor: resize-flavor-2
-  vm2_image: {{ image }}
+  node_file: {{ file }}
 
   vm1_new_flavor: m1.small
+  vm2_new_flavor: resize-flavor-2
 
-context:
+contexts:
+-
+  type: Node
+  name: LF
+  file: {{ file }}
+
+  env:
+    prefix: yardstick.benchmark.scenarios.compute
+    setup:
+    -
+      local:
+          script: yardstick/benchmark/scenarios/compute/resize_local_setup.bash
+    -
+      node1:
+          script: resize_controller_setup.bash
+    -
+      node2:
+          script: resize_controller_setup.bash
+    -
+      node3:
+          script: resize_controller_setup.bash
+    -
+      node4:
+          script: resize_compute_setup.bash
+          options: 0,2,4,6,8,10,12,14,16 512
+
+    teardown:
+    -
+      node4:
+          script: resize_compute_teardown.bash
+    -
+      node1:
+          script: resize_controller_teardown.bash
+    -
+      node2:
+          script: resize_controller_teardown.bash
+    -
+      node3:
+          script: resize_controller_teardown.bash
+    -
+      local:
+          script: yardstick/benchmark/scenarios/compute/resize_local_teardown.bash
+
+-
   name: resize
   image: {{image}}
   flavor: yardstick-flavor
   user: cirros
 
   servers:
-    node1:
+    kobe:
+      floating_ip: true
+
+  networks:
+    test:
+      cidr: '10.0.1.0/24'
+-
+  name: resize-pin
+  image: {{image}}
+  flavor: resize-flavor-1
+  user: cirros
+
+  servers:
+    bryant:
       floating_ip: true
 
   networks:
