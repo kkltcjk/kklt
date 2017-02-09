@@ -7,6 +7,7 @@
 # which accompanies this distribution, and is available at
 # http://www.apache.org/licenses/LICENSE-2.0
 ##############################################################################
+set -x
 
 openstack flavor delete yardstick-hugepages-flavor1
 openstack flavor delete yardstick-hugepages-flavor2

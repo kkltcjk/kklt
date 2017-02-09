@@ -171,6 +171,8 @@ class Hugepages(base.Scenario):
         # flavor2
         network_id = op_utils.get_network_id(self.neutron_client,
                                              self.external_network)
+        LOG.debug("self.external_network: %s, self.image: %s, flavor:%s",
+                  self.external_network, self.image, self.flavor1)
         image_id = op_utils.get_image_id(self.glance_client, self.image)
         free_mem_before = self._check_compute_node_free_hugepage(
                         self.compute_node_name[1])
