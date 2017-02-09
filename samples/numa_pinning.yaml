@@ -5,6 +5,8 @@
 schema: "yardstick:task:0.1"
 {% set cpu_set = cpu_set or '2,4,5,8' %}
 {% set run_step = run_step or 'setup,run,teardown' %}
+{% set external_network = external_network or 'ext-net' %}
+{% set file = file or 'etc/yardstick/nodes/compass_sclab_physical/pod.yaml' %}
 
 scenarios:
 -
@@ -36,4 +38,4 @@ scenarios:
 context:
   type: Node
   name: demo
-  file: etc/yardstick/nodes/compass_sclab_physical/pod.yaml
+  file: {{file}}

@@ -7,13 +7,19 @@ name: "opnfv_yardstick-cmcc"
 test_cases_dir: "samples/"
 test_cases:
 -
-    file_name: cpu_pinning.yaml
+    file_name: cpu_pinning-context.yaml
+    task_args: 
+        unknown: '{"file": "etc/yardstick/nodes/compass_sclab_physical/pod.yaml"}'
 -
     file_name: numa_pinning.yaml
-    task_args:
-        cpu_set: "2,4,5,8"
+    task_args: 
+        unknown: '{"cpu_set": "2,4,5,8",
+        "external_network": "ext-net",
+        "file": "etc/yardstick/nodes/compass_sclab_physical/pod.yaml"}'
 -
     file_name: resize.yaml
+    task_args: 
+        unknown: '{"file": "etc/yardstick/nodes/compass_sclab_physical/pod.yaml"}'
 -
     file_name: attach_nic.yaml
 -
@@ -22,3 +28,5 @@ test_cases:
     file_name: affinity-tc.yaml
 -
     file_name: heataction-tc.yaml
+-
+    file_name: huge_pages.yaml
