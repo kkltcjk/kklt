@@ -4,12 +4,14 @@
 # cores.
 
 schema: "yardstick:task:0.1"
+{% set cpu_set = cpu_set or "2,4,6,8,10,12" %}
 {% set file = file or 'etc/yardstick/nodes/compass_sclab_physical/pod.yaml' %}
 
 scenarios:
 -
   type: CpuPinning-context
   options:
+    cpu_set: {{cpu_set}}
     host: node4
     file: {{file}}
 
@@ -30,7 +32,7 @@ contexts:
     setup:
     -
       local:
-          script: yardstick/benchmark/scenarios/compute/prepare_cpu_pinning.bash
+          script: yardstick/benchmark/scenarios/compute/prepare_cpu_pinning.bash > /dev/null
     -
       node1:
           script: controller_setup.bash
@@ -43,7 +45,7 @@ contexts:
     -
       node4:
           script: compute_setup.bash
-          options: 2,4,6,8,10,12 512
+          options: {{cpu_set}} 512
 
     teardown:
     -
@@ -60,8 +62,7 @@ contexts:
           script: compute_reset.bash
     -
       local:
-          script: yardstick/benchmark/scenarios/compute/reset_pinning.bash
-
+          script: yardstick/benchmark/scenarios/compute/reset_pinning.bash > /dev/null
 -
   name: cpu-pinning
   image: cirros-0.3.3

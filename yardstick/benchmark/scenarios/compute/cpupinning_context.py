@@ -7,6 +7,7 @@
 # http://www.apache.org/licenses/LICENSE-2.0
 ##############################################################################
 
+from __future__ import print_function
 from __future__ import absolute_import
 
 import os
@@ -35,6 +36,7 @@ class CpuPinning(base.Scenario):
         self.scenario_cfg = scenario_cfg
         self.context_cfg = context_cfg
         self.options = self.scenario_cfg['options']
+        self.cpu_set = self.options.get("cpu_set", None)
         self.host_str = self.options.get("host", "node4")
         self.host_list = self.host_str.split(',')
         self.nova_client = op_utils.get_nova_client()
@@ -97,17 +99,24 @@ class CpuPinning(base.Scenario):
         self.instance = op_utils.get_instance_by_name(self.nova_client, host)
 
         cmd = "virsh dumpxml %s" % self.instance.id
-        LOG.debug("Executing command: %s", cmd)
+        LOG.debug("Dumping VM configrations: %s", cmd)
         status, stdout, stderr = self.client.execute(cmd)
         if status:
-            result.update({"Test": 0})
             raise RuntimeError(stderr)
-        else:
-            result.update({"Test": 1})
 
         pinning = []
+        test_status = 1
         root = ET.fromstring(stdout)
         for vcpupin in root.iter('vcpupin'):
             pinning.append(vcpupin.attrib)
 
+        for item in pinning:
+            if str(item["cpuset"]) not in self.cpu_set:
+                test_status = 0
+                print("Test failed: VM CPU not pinned correctly!")
+                break
+
+        print("Test passed: VM CPU pinned correctly!")
+
+        result.update({"Test": test_status})
         result.update({"pinning": pinning})

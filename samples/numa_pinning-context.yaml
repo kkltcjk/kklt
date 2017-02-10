@@ -2,7 +2,7 @@
 # Sample benchmark task config file
 # Perform a pinning of virtual machine instances to dedicated NUMA node.
 schema: "yardstick:task:0.1"
-{% set cpu_set = cpu_set or '2,4,6,12 512' %}
+{% set cpu_set = cpu_set or '2,4,6,12' %}
 {% set file = file or 'etc/yardstick/nodes/compass_sclab_physical/pod.yaml' %}
 
 scenarios:
@@ -10,8 +10,6 @@ scenarios:
   type: NumaPinning-context
   options:
     image: cirros-0.3.3
-    flavor: yardstick-pinned-flavor
-    external_network: ext-net
     host: node4
     file: {{file}}
 
@@ -32,7 +30,7 @@ contexts:
     setup:
     -
       local:
-          script: yardstick/benchmark/scenarios/compute/prepare_numa_pinning.bash
+          script: yardstick/benchmark/scenarios/compute/prepare_numa_pinning.bash > /dev/null
     -
       node1:
           script: controller_setup.bash
@@ -45,7 +43,7 @@ contexts:
     -
       node4:
           script: compute_setup.bash
-          options: {{cpu_set}}
+          options: {{cpu_set}} 512
 
     teardown:
     -
@@ -62,7 +60,7 @@ contexts:
           script: compute_reset.bash
     -
       local:
-          script: yardstick/benchmark/scenarios/compute/reset_pinning.bash
+          script: yardstick/benchmark/scenarios/compute/reset_pinning.bash > /dev/null
 
 -
   name: numa-pinning

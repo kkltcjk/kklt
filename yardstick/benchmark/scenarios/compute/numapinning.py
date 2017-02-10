@@ -10,6 +10,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+import os
 import logging
 import xml.etree.ElementTree as ET
 
@@ -40,15 +41,15 @@ class NumaPinning(base.Scenario):
         self.host_str = self.options.get("host", 'host1')
         self.host_list = self.host_str.split(',')
         self.host_list.sort()
-        self.flavor = self.options.get("flavor", 'yardstick-pinned-flavor')
         self.image = self.options.get("image", 'cirros-0.3.3')
-        self.external_network = self.options.get("external_network", "ext-net")
-        self.cpu_set = self.options.get("cpu_set", '1,2,3,4,5,6')
+        self.external_network = os.getenv("EXTERNAL_NETWORK")
+        self.cpu_set = self.options.get("cpu_set", None)
         self.host_memory = self.options.get("host_memory", 512)
         self.nova_client = op_utils.get_nova_client()
         self.neutron_client = op_utils.get_neutron_client()
         self.glance_client = op_utils.get_glance_client()
         self.instance = None
+        self.instance_2 =None
         self.client = None
 
     def _get_host_node(self, host_list, node_type):
@@ -135,11 +136,11 @@ class NumaPinning(base.Scenario):
 
         LOG.debug("Creating NUMA-pinned-instance-1...")
         self.instance = op_utils.create_instance_and_wait_for_active(
-            self.flavor, image_id, network_id,
+            "yardstick-pinned-flavor", image_id, network_id,
             instance_name="NUMA-pinned-instance-1")
 
         cmd = "virsh dumpxml %s" % self.instance.id
-        LOG.debug("Executing command: %s", cmd)
+        LOG.debug("Dumping VM configrations: %s", cmd)
         status, stdout, stderr = self.client.execute(cmd)
         if status:
             raise RuntimeError(stderr)
@@ -154,19 +155,21 @@ class NumaPinning(base.Scenario):
         # Create multiple VMs to test CPU ran out
         LOG.debug("Creating NUMA-pinned-instance-2...")
         self.instance_2 = op_utils.create_instance(
-            self.flavor, image_id, network_id,
+            "yardstick-pinned-flavor", image_id, network_id,
             instance_name="NUMA-pinned-instance-2")
 
         status = op_utils.check_status("ERROR", "NUMA-pinned-instance-2",
                                        10, 5)
 
         if status:
-            print("Create NUMA-pinned-instance-2 failed")
+            print("Create NUMA-pinned-instance-2 failed: lack of resources.")
 
         if len(pinning) == 1 and status:
             result.update({"Test": 1})
+            print("Test passed!")
         else:
             result.update({"Test": 0})
+            print("Test failed!")
 
         op_utils.delete_instance(self.nova_client, self.instance.id)
         op_utils.delete_instance(self.nova_client, self.instance_2.id)

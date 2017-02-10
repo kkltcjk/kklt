@@ -41,13 +41,13 @@ class NumaPinning(base.Scenario):
         self.options = self.scenario_cfg['options']
         self.host_str = self.options.get("host", "node4")
         self.host_list = self.host_str.split(',')
-        self.flavor = self.options.get("flavor", 'yardstick-pinned-flavor')
         self.image = self.options.get("image", 'cirros-0.3.3')
-        self.external_network = self.options.get("external_network", "ext-net")
+        self.external_network = os.getenv("EXTERNAL_NETWORK")
         self.nova_client = op_utils.get_nova_client()
         self.neutron_client = op_utils.get_neutron_client()
         self.glance_client = op_utils.get_glance_client()
         self.instance = None
+        self.instance_2 = None
         self.client = None
 
         node_file = os.path.join(consts.YARDSTICK_ROOT_PATH,
@@ -109,7 +109,7 @@ class NumaPinning(base.Scenario):
         self.instance = op_utils.get_instance_by_name(self.nova_client, host)
 
         cmd = "virsh dumpxml %s" % self.instance.id
-        LOG.debug("Executing command: %s", cmd)
+        LOG.debug("Dumping VM configrations: %s", cmd)
         status, stdout, stderr = self.client.execute(cmd)
         if status:
             raise RuntimeError(stderr)
@@ -124,18 +124,20 @@ class NumaPinning(base.Scenario):
         # Create multiple VMs to test CPU ran out
         LOG.debug("Creating NUMA-pinned-instance-2...")
         self.instance_2 = op_utils.create_instance(
-            self.flavor, image_id, network_id,
+            "yardstick-pinned-flavor", image_id, network_id,
             instance_name="NUMA-pinned-instance-2")
 
         status = op_utils.check_status("ERROR", "NUMA-pinned-instance-2",
                                        10, 5)
 
         if status:
-            print("Create NUMA-pinned-instance-2 failed")
+            print("Create NUMA-pinned-instance-2 failed: lack of resources.")
 
         if len(pinning) == 1 and status:
             result.update({"Test": 1})
+            print("Test passed!")
         else:
             result.update({"Test": 0})
+            print("Test failed!")
 
         op_utils.delete_instance(self.nova_client, self.instance_2.id)

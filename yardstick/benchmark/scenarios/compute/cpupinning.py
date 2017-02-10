@@ -7,8 +7,10 @@
 # http://www.apache.org/licenses/LICENSE-2.0
 ##############################################################################
 
+from __future__ import print_function
 from __future__ import absolute_import
 
+import os
 import logging
 import xml.etree.ElementTree as ET
 
@@ -41,10 +43,9 @@ class CpuPinning(base.Scenario):
         self.host_str = self.options.get("host", 'host1')
         self.host_list = self.host_str.split(',')
         self.host_list.sort()
-        self.flavor = self.options.get("flavor", 'yardstick-pinned-flavor')
         self.image = self.options.get("image", 'cirros-0.3.3')
-        self.external_network = self.options.get("external_network", "ext-net")
-        self.cpu_set = self.options.get("cpu_set", '1,2,3,4,5,6')
+        self.external_network = os.getenv("EXTERNAL_NETWORK")
+        self.cpu_set = self.options.get("cpu_set", None)
         self.host_memory = self.options.get("host_memory", 512)
         self.nova_client = op_utils.get_nova_client()
         self.neutron_client = op_utils.get_neutron_client()
@@ -134,24 +135,32 @@ class CpuPinning(base.Scenario):
                                              self.external_network)
         image_id = op_utils.get_image_id(self.glance_client, self.image)
 
+        LOG.debug("Creating Virtaul machine: cpu-pinned-instance")
         self.instance = op_utils.create_instance_and_wait_for_active(
-            self.flavor, image_id, network_id,
+            "yardstick-pinned-flavor", image_id, network_id,
             instance_name="cpu-pinned-instance")
 
         cmd = "virsh dumpxml %s" % self.instance.id
-        LOG.debug("Executing command: %s", cmd)
+        LOG.debug("Dumping VM configrations: %s", cmd)
         status, stdout, stderr = self.client.execute(cmd)
         if status:
-            result.update({"Test": 0})
             raise RuntimeError(stderr)
-        else:
-            result.update({"Test": 1})
 
         pinning = []
+        test_status = 1
         root = ET.fromstring(stdout)
         for vcpupin in root.iter('vcpupin'):
             pinning.append(vcpupin.attrib)
 
+        for item in pinning:
+            if str(item["cpuset"]) not in self.cpu_set:
+                test_status = 0
+                print("Test failed: VM CPU not pinned correctly!")
+                break
+
+        print("Test passed: VM CPU pinned correctly!")
+
+        result.update({"Test": test_status})
         result.update({"pinning": pinning})
 
         op_utils.delete_instance(self.nova_client, self.instance.id)
