@@ -142,12 +142,12 @@ class Migrate(base.Scenario):
 
     def run(self, result):
         targets = self.scenario_cfg.get('targets')
-        vm1 = targets[0]
+        vm1 = targets[1]
 
         status1, interrupt_time = self._do_first_job(vm1)
         LOG.debug('First job is %s', status1)
 
-        vm2 = targets[1]
+        vm2 = targets[0]
         status2 = self._do_second_job(vm2)
         LOG.debug('Second job is %s', status2)
 
@@ -240,7 +240,7 @@ class Migrate(base.Scenario):
         return nodepin_ok and vcpupin_ok
 
     def _check_numa_node(self, server_id, host):
-        compute_node = 'node{}'.format(host.strip()[-1])
+        compute_node = self.scenario_cfg.get(host.strip())
         self._get_host_client(compute_node)
 
         cmd = "virsh dumpxml %s" % server_id

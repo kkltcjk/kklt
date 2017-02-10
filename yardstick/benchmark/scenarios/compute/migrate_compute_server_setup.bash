@@ -6,7 +6,7 @@ apt-get update && apt-get install nfs-kernel-server
 
 nfs_config_path='/etc/exports'
 cp -p "${nfs_config_path}" /tmp/exports
-sed -i '$a /var/lib/nova/instances 172.16.1.4/255.255.255.0(rw,sync,fsid=0,no_root_squash,no_subtree_check)' "${nfs_config_path}"
+sed -i '$a /var/lib/nova/instances *(rw,sync,fsid=0,no_root_squash,no_subtree_check)' "${nfs_config_path}"
 /etc/init.d/nfs-kernel-server restart
 
 libvirtd_config_path='/etc/libvirt/libvirtd.conf'

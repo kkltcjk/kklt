@@ -8,21 +8,23 @@ test_cases_dir: "samples/"
 test_cases:
 -
     file_name: cpu_pinning-context.yaml
-    task_args: 
+    task_args:
         unknown: '{"file": "etc/yardstick/nodes/compass_sclab_physical/pod.yaml"}'
 -
     file_name: numa_pinning.yaml
-    task_args: 
+    task_args:
         unknown: '{"cpu_set": "2,4,5,8",
         "external_network": "ext-net",
         "file": "etc/yardstick/nodes/compass_sclab_physical/pod.yaml"}'
 -
     file_name: migrate.yaml
     task_args:
-        unknown: '{"file": "etc/yardstick/nodes/compass_sclab_physical/pod.yaml"}'
+        unknown: '{"file": "etc/yardstick/nodes/compass_sclab_physical/pod.yaml",
+        "server_name": "host4", "host1": "host1", "host2": "host2",
+        "host3": "host3", "host4": "host4", "host5": "host5"}'
 -
     file_name: resize.yaml
-    task_args: 
+    task_args:
         unknown: '{"file": "etc/yardstick/nodes/compass_sclab_physical/pod.yaml"}'
 -
     file_name: attach_nic.yaml

@@ -1,15 +1,16 @@
 ---
 
 schema: "yardstick:task:0.1"
-{% set image = image or "cirros-0.3.3" %}
 {% set file = file or "etc/yardstick/nodes/compass_sclab_physical/pod.yaml" %}
+{% set cpu_set = cpu_set or "0,2,4,6,8,10,12,14,16" %}
+{% set host_memory = host_memory or "512" %}
 scenarios:
 -
   type: Resize
 
   options:
-    cpu_set: 0,2,4,6,8,10,12,14,16
-    host_memory: 512
+    cpu_set: {{ cpu_set }}
+    host_memory: {{ host_memory }}
     host: node1,node2,node3,node4
 
   host: kobe.resize
@@ -48,7 +49,7 @@ contexts:
     -
       node4:
           script: resize_compute_setup.bash
-          options: 0,2,4,6,8,10,12,14,16 512
+          options: {{ cpu_set }} {{ host_memory }}
 
     teardown:
     -
@@ -69,7 +70,7 @@ contexts:
 
 -
   name: resize
-  image: {{image}}
+  image: cirros-0.3.3
   flavor: yardstick-flavor
   user: cirros
 
@@ -82,7 +83,7 @@ contexts:
       cidr: '10.0.1.0/24'
 -
   name: resize-pin
-  image: {{image}}
+  image: cirros-0.3.3
   flavor: resize-flavor-1
   user: cirros
 
