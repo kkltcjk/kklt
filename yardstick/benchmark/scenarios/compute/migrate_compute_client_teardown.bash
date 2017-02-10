@@ -1,28 +1,16 @@
-mv /tmp/fstab /etc/fstab
-umount host4:/
+mv /tmp/group /etc/group
+mv /tmp/passwd /etc/passwd
+
+host=$1
+umount "${host}:/var/lib/nova/instances"
+
+service iptables save
+setsebool -P virt_use_nfs 1
 
 mv /tmp/libvirtd.conf /etc/libvirt/libvirtd.conf
-mv /tmp/libvirt-bin.conf /etc/init/libvirt-bin.conf
-mv /tmp/libvirt-bin /etc/default/libvirt-bin
-
-stop libvirt-bin && start libvirt-bin
-
+mv /tmp/libvirtd /etc/sysconfig/libvirtd
 
 mv /tmp/nova.conf /etc/nova/nova.conf
-if which systemctl 2>/dev/null; then
-  if [ $(systemctl is-active nova-compute.service) == "active" ]; then
-      echo "restarting nova-compute.service"
-      systemctl restart nova-compute.service
-  elif [ $(systemctl is-active openstack-nova-compute.service) == "active" ]; then
-      echo "restarting openstack-nova-compute.service"
-      systemctl restart openstack-nova-compute.service
-  fi
-else
-  if [[ $(service nova-compute status | grep running) ]]; then
-    echo "restarting nova-compute.service"
-    service nova-compute restart
-  elif [[ $(service openstack-nova-compute status | grep running) ]]; then
-    echo "restarting openstack-nova-compute.service"
-    service openstack-nova-compute restart
-  fi
-fi
+
+systemctl restart libvirtd.service
+openstack-service restart
