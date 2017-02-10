@@ -4,7 +4,7 @@ schema: "yardstick:task:0.1"
 {% set file = file or "etc/yardstick/nodes/compass_sclab_physical/pod.yaml" %}
 {% set cpu_set = cpu_set or "0,2,4,6,8,10,12,14,16" %}
 {% set host_memory = host_memory or "512" %}
-{% set server_name = server_name or "host4" %}
+{% set server_name = server_name or "host5" %}
 {% set host1 = host1 or "host1" %}
 {% set host2 = host2 or "host2" %}
 {% set host3 = host3 or "host3" %}
@@ -55,11 +55,11 @@ contexts:
       node3:
           script: migrate_controller_setup.bash
     -
-      node4:
+      node5:
           script: migrate_compute_server_setup.bash
           options: {{ cpu_set }} {{ host_memory }}
     -
-      node5:
+      node4:
           script: migrate_compute_client_setup.bash
           options: {{ cpu_set }} {{ host_memory }} {{ server_name }}
 
@@ -74,10 +74,11 @@ contexts:
       node3:
           script: migrate_controller_teardown.bash
     -
-      node5:
-          script: migrate_compute_client_teardown.bash
-    -
       node4:
+          script: migrate_compute_client_teardown.bash
+          options: {{ server_name }}
+    -
+      node5:
           script: migrate_compute_server_teardown.bash
     -
       local:
