@@ -30,6 +30,8 @@ test_cases:
     file_name: attach_nic.yaml
 -
     file_name: vlan_vxlan.yaml
+    task_args:
+        unknown: '{"public_net": "ext-net"}'
 -
     file_name: affinity-tc.yaml
 -
