@@ -27,7 +27,6 @@ class VlanVxlan(base.Scenario):
         self.scenario_cfg = scenario_cfg
         self.context_cfg = context_cfg
         self.nova_client = op_utils.get_nova_client()
-        self.testcase_status = 1
         self.setup_done = False
 
     def setup(self):
@@ -39,9 +38,15 @@ class VlanVxlan(base.Scenario):
         if not self.setup_done:
             self.setup()
 
+        test_status = 1
+
         for server in self.nova_client.servers.list():
             print(server.name, server.id, server.status, server.networks)
             if server.status != "ACTIVE":
-                self.testcase_status = 0
+                test_status = 0
+                print("Test failed: create VM failed.")
+                break
+        
+        print("Test passed.")
 
-        result.update({"Test": self.testcase_status})
+        result.update({"Test": test_status})
