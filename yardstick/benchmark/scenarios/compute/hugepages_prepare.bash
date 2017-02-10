@@ -25,7 +25,7 @@ compute_nodes=($(nova host-list | grep compute | sort | awk '{print $2}'))
 nova aggregate-add-host compute_node_1 ${compute_nodes[0]}
 # openstack aggregate add host compute_node_1 ${compute_nodes[0]}
 
-nova aggregate-add-host compute_node_2 ${compute_nodes[0]}
+nova aggregate-add-host compute_node_2 ${compute_nodes[1]}
 # openstack aggregate add host compute_node_2 ${compute_nodes[1]}
 
 nova flavor-create yardstick-hugepages-flavor1 110 1024 3 2
