@@ -141,10 +141,29 @@ class Migrate(base.Scenario):
         return current_host
 
     def run(self, result):
+        targets = self.scenario_cfg.get('targets')
+        vm1 = targets[1]
+
+        status1, interrupt_time = self._do_first_job(vm1)
+        LOG.debug('First job is %s', status1)
+
+        vm2 = targets[0]
+        status2 = self._do_second_job(vm2)
+        LOG.debug('Second job is %s', status2)
+
+        status = 1 if status1 and status2 else 0
+        LOG.debug('The final status is %s', status)
+
+        test_result = {
+            'status': status,
+            'interrupt_time': interrupt_time
+        }
+
+        result.update(test_result)
+
+    def _do_first_job(self, target):
         ping_thread = self._do_ping_task()
 
-        targets = self.scenario_cfg.get('targets')
-        target = targets[0]
         server = openstack_utils.get_server_by_name(target)
 
         current_host = self._get_current_host_name(server.id)
@@ -168,7 +187,9 @@ class Migrate(base.Scenario):
 
         LOG.debug('First Job Done')
 
-        vm2 = targets[1]
+        return status1, interrupt_time
+
+    def _do_second_job(self, vm2):
         server = openstack_utils.get_server_by_name(vm2)
 
         current_host = self._get_current_host_name(server.id)
@@ -195,14 +216,7 @@ class Migrate(base.Scenario):
 
         status2 = True if host == current_host and numa_status else False
 
-        status = 1 if status1 and status2 else 0
-
-        test_result = {
-            'status': status,
-            'interrupt_time': interrupt_time
-        }
-
-        result.update(test_result)
+        return status2
 
     def _check_vm2_status(self, info1, info2):
         nodepin_ok = True
@@ -226,7 +240,7 @@ class Migrate(base.Scenario):
         return nodepin_ok and vcpupin_ok
 
     def _check_numa_node(self, server_id, host):
-        compute_node = 'node{}'.format(host.strip()[-1])
+        compute_node = self.scenario_cfg.get(host.strip())
         self._get_host_client(compute_node)
 
         cmd = "virsh dumpxml %s" % server_id

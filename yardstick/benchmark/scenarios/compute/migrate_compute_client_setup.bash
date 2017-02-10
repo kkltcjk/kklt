@@ -1,8 +1,9 @@
+host=$3
 apt-get update && apt-get install nfs-common
 
 nfs_config_path='/etc/fstab'
 cp -p "${nfs_config_path}" /tmp/fstab
-sed -i '$a host4:/ /var/lib/nova/instances nfs4 defaults 0 0' "${nfs_config_path}"
+sed -i '$a '''${host}''':/ /var/lib/nova/instances nfs4 defaults 0 0' "${nfs_config_path}"
 mount -a -v
 
 libvirtd_config_path='/etc/libvirt/libvirtd.conf'
