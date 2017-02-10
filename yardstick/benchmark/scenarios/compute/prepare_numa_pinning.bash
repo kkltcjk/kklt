@@ -7,17 +7,18 @@
 # which accompanies this distribution, and is available at
 # http://www.apache.org/licenses/LICENSE-2.0
 ##############################################################################
-
 prepare_aggregate()
 {
     # Create the "pinned-cpu" aggregate for hosts that will received pinning
     # requests.
 
-    openstack aggregate create pinned-cpu
+    nova aggregate-create pinned-cpu
+    # openstack aggregate create pinned-cpu
 
-    # Create the "regular" aggregate for all other hosts.
+    # Create the "regular" aggregate for all other hosts
 
-    openstack aggregate create regular
+    nova aggregate-create regular
+    # openstack aggregate create regular
 
     # Set metadata on the "pinned-cpu" aggregate, this will be used to match the
     # flavor we create shortly - here we are using the arbitrary key pinned and
@@ -37,7 +38,8 @@ prepare_aggregate()
     # Hosts that are not intended to be targets for pinned instances should be
     # added to the "regular" host aggregate
 
-    compute_nodes=($(openstack availability zone list --long | grep nova-compute | sort | awk '{print $7}'))
+    compute_nodes=($(nova host-list | grep compute | sort | awk '{print $2}'))
+    # compute_nodes=($(openstack availability zone list --long | grep nova-compute | sort | awk '{print $7}'))
 
     nova aggregate-add-host pinned-cpu ${compute_nodes[0]}
     # openstack aggregate add host pinned-cpu ${compute_nodes[0]}
@@ -50,9 +52,14 @@ prepare_aggregate()
     # the "regular" aggregate:
 
     for FLAVOR in `nova flavor-list | grep "True" | cut -f 2 -d ' '`; \
-        do openstack flavor set --property \
-            aggregate_instance_extra_specs:pinned=false ${FLAVOR}; \
+        do nova flavor-key ${FLAVOR} set \
+            aggregate_instance_extra_specs:pinned=false; \
         done
+
+    #for FLAVOR in `nova flavor-list | grep "True" | cut -f 2 -d ' '`; \
+    #    do openstack flavor set --property \
+    #        aggregate_instance_extra_specs:pinned=false ${FLAVOR}; \
+    #    done
 
     # Create a new flavor "yardstick-pinned-flavor" for CPU pinning.
     # Set the hw:cpy_policy flavor extraspecification to dedicated. This denotes
@@ -62,16 +69,17 @@ prepare_aggregate()
     # true. This denotes that all instances created using this flavor will be sent
     # to hosts in host aggregates with pinned=true in their aggregate metadata:
 
-    openstack flavor create --id 101 --ram 512 --disk 3 --vcpus 2 yardstick-pinned-flavor
+    nova flavor-create yardstick-pinned-flavor 101 512 3 2
+    #openstack flavor create --id 101 --ram 512 --disk 3 --vcpus 2 yardstick-pinned-flavor
 
     # To restrict an instance’s vCPUs to a single host NUMA node
-    openstack flavor set --property hw:numa_nodes=1 yardstick-pinned-flavor
+    nova flavor-key yardstick-pinned-flavor set hw:cpu_policy=1
+    # openstack flavor set --property hw:numa_nodes=1 yardstick-pinned-flavor
 
-    # nova flavor-key yardstick-pinned-flavor set hw:cpu_policy=dedicated
-    openstack flavor set --property hw:cpu_policy=dedicated yardstick-pinned-flavor
+    nova flavor-key yardstick-pinned-flavor set hw:cpu_policy=dedicated
+    # openstack flavor set --property hw:cpu_policy=dedicated yardstick-pinned-flavor
 
-    # nova flavor-key yardstick-pinned-flavor set aggregate_instance_extra_specs:pinned=true
-    openstack flavor set --property aggregate_instance_extra_specs:pinned=true yardstick-pinned-flavor
+    nova flavor-key yardstick-pinned-flavor set aggregate_instance_extra_specs:pinned=true
+    # openstack flavor set --property aggregate_instance_extra_specs:pinned=true yardstick-pinned-flavor
 }
-
 prepare_aggregate
