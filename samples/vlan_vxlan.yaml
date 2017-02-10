@@ -3,6 +3,7 @@
 # Test the ability for supporting vlan and vxlan network
 
 schema: "yardstick:task:0.1"
+{% set public_net = public_net or 'ext-net' %}
 
 scenarios:
 -
@@ -21,7 +22,7 @@ contexts:
     image: cirros-0.3.3
     flavor: yardstick-flavor
     key_name: yardstick_key
-    public_net: "ext-net"
+    public_net: {{public_net}}
     private_net_name: "vlan-net"
     private_net_type: "vlan"
     physical_network: "physnet"
@@ -39,7 +40,7 @@ contexts:
     image: cirros-0.3.3
     flavor: yardstick-flavor
     key_name: yardstick_key
-    public_net: "ext-net"
+    public_net: {{public_net}}
     private_net_name: "vxlan-net"
     private_net_cidr: "10.0.2.0/24"
     private_net_gateway: "10.0.2.1"

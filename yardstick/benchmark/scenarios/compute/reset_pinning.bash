@@ -7,23 +7,29 @@
 # which accompanies this distribution, and is available at
 # http://www.apache.org/licenses/LICENSE-2.0
 ##############################################################################
-
 reset_aggregate()
 {
     # Delete the "yardstick-pinned-flavor" flavor
 
-    openstack flavor delete yardstick-pinned-flavor
+    nova flavor-delete yardstick-pinned-flavor
+    # openstack flavor delete yardstick-pinned-flavor
 
     # Unset the "aggregate_instance_extra_specs:pinned" property on all existing flavors
 
     for FLAVOR in `nova flavor-list | grep "True" | cut -f 2 -d ' '`; \
-        do openstack flavor unset --property \
-            aggregate_instance_extra_specs:pinned ${FLAVOR}; \
+        do nova flavor-key ${FLAVOR} unset \
+            aggregate_instance_extra_specs:pinned; \
         done
+
+    #for FLAVOR in `nova flavor-list | grep "True" | cut -f 2 -d ' '`; \
+    #    do openstack flavor unset --property \
+    #        aggregate_instance_extra_specs:pinned ${FLAVOR}; \
+    #    done
 
     # remove hosts from corresponding Nova aggregates
 
-    compute_nodes=($(openstack availability zone list --long | grep nova-compute | sort | awk '{print $7}'))
+    compute_nodes=($(nova host-list | grep compute | sort | awk '{print $2}'))
+    # compute_nodes=($(openstack availability zone list --long | grep nova-compute | sort | awk '{print $7}'))
 
     nova aggregate-remove-host pinned-cpu ${compute_nodes[0]}
     # openstack aggregate remove host pinned-cpu ${compute_nodes[0]}
@@ -33,9 +39,10 @@ reset_aggregate()
 
     # Delete created Nova aggregates
 
-    openstack aggregate delete pinned-cpu
+    nova aggregate-delete pinned-cpu
+    # openstack aggregate delete pinned-cpu
 
-    openstack aggregate delete regular
+    nova aggregate-delete regular
+    # openstack aggregate delete regular
 }
-
 reset_aggregate

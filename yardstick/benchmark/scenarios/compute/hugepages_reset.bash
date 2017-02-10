@@ -9,13 +9,23 @@
 ##############################################################################
 set -x
 
-openstack flavor delete yardstick-hugepages-flavor1
-openstack flavor delete yardstick-hugepages-flavor2
+nova flavor-delete yardstick-hugepages-flavor1
+# openstack flavor delete yardstick-hugepages-flavor1
 
-compute_nodes=($(openstack availability zone list --long | grep nova-compute | awk '{print $7}' | sort))
-openstack aggregate remove host compute_node_1 ${compute_nodes[0]}
-openstack aggregate remove host compute_node_2 ${compute_nodes[1]}
+nova flavor-delete yardstick-hugepages-flavor2
+# openstack flavor delete yardstick-hugepages-flavor2
 
-openstack aggregate delete compute_node_1
-openstack aggregate delete compute_node_2
+compute_nodes=($(nova host-list | grep compute | sort | awk '{print $2}'))
+# compute_nodes=($(openstack availability zone list --long | grep nova-compute | awk '{print $7}' | sort))
 
+nova aggregate-remove-host compute_node_1 ${compute_nodes[0]}
+# openstack aggregate remove host compute_node_1 ${compute_nodes[0]}
+
+nova aggregate-remove-host compute_node_2 ${compute_nodes[1]}
+# openstack aggregate remove host compute_node_2 ${compute_nodes[1]}
+
+nova aggregate-delete compute_node_1
+# openstack aggregate delete compute_node_1
+
+nova aggregate-delete compute_node_2
+# openstack aggregate delete compute_node_2
