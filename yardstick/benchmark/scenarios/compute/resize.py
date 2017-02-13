@@ -12,6 +12,7 @@ from __future__ import absolute_import
 
 import logging
 import os
+import subprocess
 from datetime import datetime
 from xml.etree import ElementTree as ET
 
@@ -160,13 +161,17 @@ class Resize(base.Scenario):
 
         new_flavor = self.scenario_cfg['vm2_new_flavor']
 
-        data1 = self._check_numa_node(server.id)
+        current_host = self._get_current_host_name(server.id)
+
+        data1 = self._check_numa_node(server.id, current_host)
         LOG.debug('Data before resize: %s', data1)
 
         duration2 = self._do_resize(vm2, new_flavor)
         LOG.debug('Resize Success! The duration is %s', duration2)
 
-        data2 = self._check_numa_node(server.id)
+        current_host = self._get_current_host_name(server.id)
+
+        data2 = self._check_numa_node(server.id, current_host)
         LOG.debug('Data after resize: %s', data2)
 
         status2 = self._check_vm2_status(data1, data2)
@@ -195,9 +200,23 @@ class Resize(base.Scenario):
 
         return nodepin_ok and vcpupin_ok
 
-    def _check_numa_node(self, server_id):
-        for compute_node in self.compute_nodes:
-            self._get_host_client(compute_node)
+    def _get_current_host_name(self, server_id):
+
+        key = 'OS-EXT-SRV-ATTR:host'
+        cmd = "openstack server show %s | grep %s | awk '{print $4}'" % (
+            server_id, key)
+
+        LOG.debug('Executing cmd: %s', cmd)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+        current_host = p.communicate()[0].strip()
+
+        LOG.debug('Host: %s', current_host)
+
+        return current_host
+
+    def _check_numa_node(self, server_id, host):
+        compute_node = self.scenario_cfg.get(host.strip())
+        self._get_host_client(compute_node)
 
         cmd = "virsh dumpxml %s" % server_id
         LOG.debug("Executing command: %s", cmd)
