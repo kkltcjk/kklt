@@ -74,10 +74,10 @@ class Resize(base.Scenario):
 
     def _get_host_client(self, node_name):
         node = self.nodes.get(node_name, None)
-        user = str(node.get('user', 'ubuntu'))
-        ssh_port = str(node.get("ssh_port", ssh.DEFAULT_PORT))
-        ip = str(node.get('ip', None))
-        pwd = str(node.get('password', None))
+        user = node.get('user', 'ubuntu')
+        ssh_port = node.get("ssh_port", ssh.DEFAULT_PORT)
+        ip = node.get('ip', None)
+        pwd = node.get('password', None)
         key_fname = node.get('key_filename', '/root/.ssh/id_rsa')
 
         if pwd is not None:
