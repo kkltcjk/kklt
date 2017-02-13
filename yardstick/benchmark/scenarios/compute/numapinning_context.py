@@ -25,22 +25,29 @@ from yardstick.common.task_template import TaskTemplate
 LOG = logging.getLogger(__name__)
 
 
-class CpuPinning(base.Scenario):
-    """Perform a pinning of virtual machine instances to dedicated physical CPU
-    cores.
-    """
+class NumaPinning(base.Scenario):
+    """Perform a pinning of virtual machine instances to dedicated NUMA node"""
 
-    __scenario_type__ = "CpuPinning-context"
+    __scenario_type__ = "NumaPinning-context"
+
+    CONTROLLER_SETUP_SCRIPT = "controller_setup.bash"
+    COMPUTE_SETUP_SCRIPT = "compute_setup.bash"
+    CONTROLLER_RESET_SCRIPT = "controller_reset.bash"
+    COMPUTE_RESET_SCRIPT = "compute_reset.bash"
 
     def __init__(self, scenario_cfg, context_cfg):
         self.scenario_cfg = scenario_cfg
         self.context_cfg = context_cfg
         self.options = self.scenario_cfg['options']
-        self.cpu_set = self.options.get("cpu_set", None)
         self.host_str = self.options.get("host", "node4")
         self.host_list = self.host_str.split(',')
+        self.image = self.options.get("image", 'cirros-0.3.3')
+        self.external_network = os.getenv("EXTERNAL_NETWORK")
         self.nova_client = op_utils.get_nova_client()
+        self.neutron_client = op_utils.get_neutron_client()
+        self.glance_client = op_utils.get_glance_client()
         self.instance = None
+        self.instance_2 = None
         self.client = None
 
         node_file = os.path.join(consts.YARDSTICK_ROOT_PATH,
@@ -80,7 +87,6 @@ class CpuPinning(base.Scenario):
 
     def setup(self):
         """scenario setup"""
-
         # log in a compute node
         self.compute_node_name = self._get_host_node(self.host_list, 'Compute')
         LOG.debug("The Compute Node is: %s", self.compute_node_name)
@@ -95,6 +101,10 @@ class CpuPinning(base.Scenario):
         if not self.setup_done:
             self.setup()
 
+        network_id = op_utils.get_network_id(self.neutron_client,
+                                             self.external_network)
+        image_id = op_utils.get_image_id(self.glance_client, self.image)
+
         host = self.scenario_cfg.get('host')
         self.instance = op_utils.get_instance_by_name(self.nova_client, host)
 
@@ -105,18 +115,29 @@ class CpuPinning(base.Scenario):
             raise RuntimeError(stderr)
 
         pinning = []
-        test_status = 1
         root = ET.fromstring(stdout)
-        for vcpupin in root.iter('vcpupin'):
-            pinning.append(vcpupin.attrib)
+        for memnode in root.iter('memnode'):
+            pinning.append(memnode.attrib)
 
-        for item in pinning:
-            if str(item["cpuset"]) not in self.cpu_set:
-                test_status = 0
-                print("Test failed: VM CPU not pinned correctly!")
-                break
-
-        print("Test passed: VM CPU pinned correctly!")
-
-        result.update({"Test": test_status})
         result.update({"pinning": pinning})
+
+        # Create multiple VMs to test CPU ran out
+        LOG.debug("Creating NUMA-pinned-instance-2...")
+        self.instance_2 = op_utils.create_instance(
+            "yardstick-pinned-flavor", image_id, network_id,
+            instance_name="NUMA-pinned-instance-2")
+
+        status = op_utils.check_status("ERROR", "NUMA-pinned-instance-2",
+                                       10, 5)
+
+        if status:
+            print("Create NUMA-pinned-instance-2 failed: lack of resources.")
+
+        if len(pinning) == 1 and status:
+            result.update({"Test": 1})
+            print("Test passed!")
+        else:
+            result.update({"Test": 0})
+            print("Test failed!")
+
+        op_utils.delete_instance(self.nova_client, self.instance_2.id)

@@ -1,21 +1,19 @@
 ---
 # Sample benchmark task config file
-# Perform a pinning of virtual machine instances to dedicated physical CPU
-# cores.
-
+# Perform a pinning of virtual machine instances to dedicated NUMA node.
 schema: "yardstick:task:0.1"
-{% set cpu_set = cpu_set or "2,4,6,8,10,12" %}
+{% set cpu_set = cpu_set or '2,4,6,12' %}
 {% set file = file or 'etc/yardstick/nodes/compass_sclab_physical/pod.yaml' %}
 
 scenarios:
 -
-  type: CpuPinning-context
+  type: NumaPinning-context
   options:
-    cpu_set: {{cpu_set}}
+    image: cirros-0.3.3
     host: node4
     file: {{file}}
 
-  host: apollo.cpu-pinning
+  host: apollo.numa-pinning
 
   runner:
     type: Iteration
@@ -32,7 +30,7 @@ contexts:
     setup:
     -
       local:
-          script: yardstick/benchmark/scenarios/compute/prepare_cpu_pinning.bash > /dev/null
+          script: yardstick/benchmark/scenarios/compute/prepare_numa_pinning.bash > /dev/null
     -
       node1:
           script: controller_setup.bash
@@ -63,8 +61,9 @@ contexts:
     -
       local:
           script: yardstick/benchmark/scenarios/compute/reset_pinning.bash > /dev/null
+
 -
-  name: cpu-pinning
+  name: numa-pinning
   image: cirros-0.3.3
   flavor: yardstick-pinned-flavor
   user: cirros

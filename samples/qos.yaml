@@ -1,0 +1,90 @@
+---
+# Sample benchmark task config file
+# Set QoS policy and measure network throughput using iperf3
+
+schema: "yardstick:task:0.1"
+{% set file = file or 'etc/yardstick/nodes/compass_sclab_physical/pod.yaml' %}
+
+scenarios:
+-
+  type: QoS
+  options:
+    qos_policy1: 100Mbps
+    qos_policy2: 1000Mbps
+
+  host: zeus.qos
+  target: hera.qos
+
+  runner:
+    type: Iteration
+    iterations: 1
+
+contexts:
+-
+  type: Node
+  name: env-prepare
+  file: {{file}}
+
+  env:
+    prefix: yardstick.benchmark.scenarios.networking
+    setup:
+    -
+      node1:
+          script: qos_controller_setup.bash
+    -
+      node2:
+          script: qos_controller_setup.bash
+    -
+      node3:
+          script: qos_controller_setup.bash
+    -
+      node4:
+          script: qos_compute_setup.bash
+    -
+      node5:
+          script: qos_compute_setup.bash
+    -
+      local:
+          script: yardstick/benchmark/scenarios/networking/prepare_qos_policy.bash
+
+    teardown:
+    -
+      local:
+          script: yardstick/benchmark/scenarios/networking/reset_qos_policy.bash
+    -
+      node1:
+          script: qos_controller_reset.bash
+    -
+      node2:
+          script: qos_controller_reset.bash
+    -
+      node3:
+          script: qos_controller_reset.bash
+    -
+      node4:
+          script: qos_compute_reset.bash
+    -
+      node5:
+          script: qos_compute_reset.bash
+
+-
+  name: qos
+  image: yardstick-image
+  flavor: yardstick-flavor
+  user: ubuntu
+
+  placement_groups:
+    pgrp1:
+      policy: "availability"
+
+  servers:
+    zeus:
+      floating_ip: true
+      placement: "pgrp1"
+    hera:
+      floating_ip: true
+      placement: "pgrp1"
+
+  networks:
+    test:
+      cidr: '10.0.1.0/24'

@@ -15,8 +15,6 @@ scenarios:
     host_memory: 512
     host: host1,host2,host3,host4
     image: cirros-0.3.3
-    flavor: yardstick-pinned-flavor
-    external_network: ext-net
 
   nodes:
     host1: node1.demo

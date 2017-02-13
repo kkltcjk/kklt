@@ -152,6 +152,15 @@ def get_glance_client():
 # *********************************************
 #   NOVA
 # *********************************************
+def get_instances(nova_client):
+    try:
+        instances = nova_client.servers.list(search_opts={'all_tenants': 1})
+        return instances
+    except Exception, e:
+        log.error("Error [get_instances(nova_client)]: %s" % e)
+        return None
+
+
 def get_instance_status(nova_client, instance):
     try:
         instance = nova_client.servers.get(instance.id)
@@ -401,6 +410,18 @@ def get_network_id(neutron_client, network_name):
     for n in networks:
         if n['name'] == network_name:
             id = n['id']
+            break
+    return id
+
+
+def get_port_id_by_ip(neutron_client, ip_address):
+    ports = neutron_client.list_ports()['ports']
+    id = ''
+    for n in ports:
+        for item in n['fixed_ips']:
+            if item['ip_address'] == ip_address:
+                id = n['id']
+                break
             break
     return id
 

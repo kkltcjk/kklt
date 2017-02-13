@@ -61,6 +61,7 @@ apt-get install -y \
     fio \
     git \
     gcc \
+    iperf \
     iperf3 \
     linux-tools-common \
     linux-tools-generic \
