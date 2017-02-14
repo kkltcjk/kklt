@@ -1,7 +1,7 @@
 ---
 
 schema: "yardstick:task:0.1"
-{% set file = file or "etc/yardstick/nodes/compass_sclab_virtual/pod.yaml" %}
+{% set file = file or "etc/yardstick/nodes/compass_sclab_physical/pod.yaml" %}
 {% set cpu_set = cpu_set or "0,2,4,6,8,10,12,14,16" %}
 {% set host_memory = host_memory or "512" %}
 {% set host1 = host1 or "host1" %}
@@ -16,7 +16,7 @@ scenarios:
   options:
     cpu_set: {{ cpu_set }}
     host_memory: {{ host_memory }}
-    host: node1,node2,node3,node4
+    host: node1,node2,node3,node4,node5
 
   host: kobe.resize
   target: bryant.resize-pin

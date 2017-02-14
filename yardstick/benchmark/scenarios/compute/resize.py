@@ -218,7 +218,7 @@ class Resize(base.Scenario):
         compute_node = self.scenario_cfg.get(host.strip())
         self._get_host_client(compute_node)
 
-        cmd = "virsh dumpxml %s" % server_id
+        cmd = "sudo virsh dumpxml %s" % server_id
         LOG.debug("Executing command: %s", cmd)
         status, stdout, stderr = self.host_client.execute(cmd)
         if status:
